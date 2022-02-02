@@ -23,7 +23,6 @@ contract('Factory', (accounts) => {
             from: accounts[1],
         });
         myInstance = await CloudSLA.at(scAddress);
-        console.log(myInstance)
         await myInstance.Deposit({ from: accounts[1], value: price });
         assert.equal(1, 1);
     });
