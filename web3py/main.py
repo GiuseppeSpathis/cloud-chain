@@ -1,71 +1,75 @@
-import web3
+import os
 import json
+
 from web3 import Web3
+from web3.auto import w3
 from web3.middleware import geth_poa_middleware
 
-'''
-# HTTPProvider:
-w3 = Web3(Web3.HTTPProvider('http://127.0.0.1:8545'))
-# Convenience method to automatically detect the provider
-from web3.auto import w3
-print(f'Auto detect: {w3.isConnected()}')
-'''
+from settings import (
+    WEB_SOCKET_URI,
+    COMPILED_FACTORY_PATH, DEPLOYED_FACTORY_ADDRESS,
+    COMPILED_ORACLE_PATH, DEPLOYED_ORACLE_ADDRESS,
+    accounts, private_keys
+)
 
-blockchain_address = 'ws://127.0.0.1:8546'
-accounts = [
-    '0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73',
-    '0x627306090abaB3A6e1400e9345bC60c78a8BEf57',
-    '0xf17f52151EbEF6C7334FAD080c5704D77216b732'
-]
 
-# Connect to blockchain, WebSocket
-w3 = Web3(Web3.WebsocketProvider(blockchain_address))
+def get_contract_abi(compiled_contract_path: str) -> list:
+    print(f'Get contract abi for {os.path.basename(compiled_contract_path)}')
+    with open(compiled_contract_path) as file:
+        contract_json = json.load(file)
+        contract_abi = contract_json['abi']
+    return contract_abi
+
+
+def sign_transaction(tx: dict, pk: str, label: str, log: bool = False):
+    if log:
+        print('-' * 50)
+        print(f'{label}: {json.dumps(tx, indent=4, sort_keys=True)}', end='\n\n')
+
+    signed_tx = w3.eth.account.sign_transaction(tx, private_key=pk)
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
+
+    if log:
+        tx_receipt_json = json.loads(Web3.toJSON(tx_receipt))
+        print(f'{label}_receipt: {json.dumps(tx_receipt_json, indent=4, sort_keys=True)}')
+        print('-' * 50)
+
+
+if not w3.isConnected():
+    # w3 = Web3(Web3.HTTPProvider(HTTP_URI))
+    w3 = Web3(Web3.WebsocketProvider(WEB_SOCKET_URI))
 w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-w3.eth.defaultAccount = accounts[0]
 
-compiled_factory_path = '../build/contracts/Factory.json'
-deployed_factory_address = '0x6486A01e45648B1aDCc51D375Af3a7c0a5e9002a'
-
-compiled_oracle_path = '../build/contracts/FileDigestOracle.json'
-deployed_oracle_address = '0x7cb50610e7e107b09acf3FBB8724C6df3f3e1c1d'
-
-with open(compiled_factory_path) as file:
-    contract_factory_json = json.load(file)
-    contract_factory_abi = contract_factory_json['abi']
-
-with open(compiled_oracle_path) as file:
-    contract_oracle_json = json.load(file)
-    contract_oracle_abi = contract_oracle_json['abi']
+factory_abi = get_contract_abi(COMPILED_FACTORY_PATH)
+oracle_abi = get_contract_abi(COMPILED_ORACLE_PATH)
 
 # CloudSLA creation and activation
-contract_factory = w3.eth.contract(address=deployed_factory_address, abi=contract_factory_abi)
+contract_factory = w3.eth.contract(address=DEPLOYED_FACTORY_ADDRESS, abi=factory_abi)
 print(f"All Factory functions: {contract_factory.all_functions()}")
 
-contract_oracle = w3.eth.contract(address=deployed_oracle_address, abi=contract_oracle_abi)
+contract_oracle = w3.eth.contract(address=DEPLOYED_ORACLE_ADDRESS, abi=oracle_abi)
 print(f"All FileDigestOracle functions: {contract_oracle.all_functions()}")
 
+w3.eth.default_account = accounts[0]
 price = Web3.toWei(5, 'ether')
 test_validity_duration = 60 ** 2
-res_create_child = contract_factory.functions.createChild(
-    deployed_oracle_address,
+tx_create_child = contract_factory.functions.createChild(
+    DEPLOYED_ORACLE_ADDRESS,
     accounts[1],
     price,
     test_validity_duration,
     1,
-    1 # msg.sender?
-).call()
-print(f'Call createChild: {res_create_child}')
+    1
+).buildTransaction({
+    'gasPrice': 0,
+    'from': accounts[0],
+    'nonce': w3.eth.get_transaction_count(accounts[0])
+})
+sign_transaction(tx_create_child, private_keys[0], label='create_child', log=True)
 
-res_sm_address = contract_factory.functions.getSmartContractAddress(
+w3.eth.defaultAccount = accounts[1]
+tx_sm_address = contract_factory.functions.getSmartContractAddress(
     accounts[1]
 ).call()
-print(f'Call getSmartContractAddress: {res_sm_address}')
-
-'''
-print(f"Block number: {w3.eth.block_number}")
-last_block = json.loads(Web3.toJSON(w3.eth.get_block('latest')))
-print(f'Last block: {json.dumps(last_block, indent=4, sort_keys=True)}')
-balance = w3.eth.get_balance('0x627306090abaB3A6e1400e9345bC60c78a8BEf57')
-print(f'Balance (wei): {balance}')
-print(f"Balance (eth): {Web3.fromWei(balance, 'ether')}")
-'''
+print(f'get_sm_address: {tx_sm_address}')
