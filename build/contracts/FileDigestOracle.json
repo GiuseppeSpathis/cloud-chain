@@ -8948,15 +8948,21 @@
     "version": "0.8.9+commit.e5eed63a.Emscripten.clang"
   },
   "networks": {
+    "100": {
+      "events": {},
+      "links": {},
+      "address": "0x592De2Fd06e1827b1E21A8C0cDB35535Bc5788ef",
+      "transactionHash": "0x77106e08301cc20a7a90373e5976c8df3c9b2403a02b9b9fca35e72cbaa7eae4"
+    },
     "1337": {
       "events": {},
       "links": {},
-      "address": "0xd1b691E3DE533f72c25aD88a2aDf8296744BB738",
-      "transactionHash": "0xbe5b3fa13094b202a04d77681ad1df64b2e2f2c96edc7a7b33c46e308f783c66"
+      "address": "0x35AFB3c0d77217f4527b3ACa2832a9Bb0d3153bF",
+      "transactionHash": "0x0a34a1e18c877397a5775a0411ea7a5772bf14d7b5c7352a6573a1aba1ae8f39"
     }
   },
   "schemaVersion": "3.4.4",
-  "updatedAt": "2022-02-01T22:34:15.112Z",
+  "updatedAt": "2022-02-02T15:17:35.280Z",
   "networkType": "quorum",
   "devdoc": {
     "kind": "dev",
