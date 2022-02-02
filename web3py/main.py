@@ -8,7 +8,7 @@ from web3.middleware import geth_poa_middleware
 from settings import (
     WEB_SOCKET_URI,
     COMPILED_FACTORY_PATH, DEPLOYED_FACTORY_ADDRESS,
-    COMPILED_ORACLE_PATH, DEPLOYED_ORACLE_ADDRESS,
+    COMPILED_ORACLE_PATH, DEPLOYED_ORACLE_ADDRESS,COMPILED_CLOUDSLA_PATH,
     accounts, private_keys
 )
 
@@ -73,3 +73,14 @@ tx_sm_address = contract_factory.functions.getSmartContractAddress(
     accounts[1]
 ).call()
 print(f'get_sm_address: {tx_sm_address}')
+
+cloudsla_abi = get_contract_abi(COMPILED_CLOUDSLA_PATH)
+myinstance = w3.eth.contract(address=tx_sm_address, abi=cloudsla_abi)
+
+tx_deposit=myinstance.functions.Deposit().buildTRansaction({
+    'gasPrice': 0,
+    'from': accounts[1],
+    'nonce': w3.eth.get_transaction_count(accounts[0]),
+    'value': price
+})
+sign_transaction(tx_deposit, private_keys[1], label='Deposit', log=True)

@@ -5,6 +5,7 @@ COMPILED_FACTORY_PATH = '../build/contracts/Factory.json'
 DEPLOYED_FACTORY_ADDRESS = '0x5365098A72AdE678de35E69B50E11Da165Bf6b96'
 COMPILED_ORACLE_PATH = '../build/contracts/FileDigestOracle.json'
 DEPLOYED_ORACLE_ADDRESS = '0xd1b691E3DE533f72c25aD88a2aDf8296744BB738'
+COMPILED_CLOUDSLA_PATH ='../build/contracts/CloudSLA.json'
 
 # Preloaded accounts
 accounts = [
