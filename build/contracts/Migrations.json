@@ -2311,12 +2311,12 @@
     "1337": {
       "events": {},
       "links": {},
-      "address": "0x3F0BE59Bc74c7368Aa049a0B064ce9Dc32890669",
-      "transactionHash": "0x5f6b7dfeb753b7d0b799f126912202b0ca4fd62aaf638ed2dc2b140154fdfe9d"
+      "address": "0x26cfAFd6403Be7bE19eEEFf815a147766F3a1F44",
+      "transactionHash": "0xa8231fef102eef70e78a53bdc100efc65e04f360ae01c57e0b74d035454e3c63"
     }
   },
   "schemaVersion": "3.4.4",
-  "updatedAt": "2022-01-28T14:28:48.151Z",
+  "updatedAt": "2022-02-01T22:34:15.138Z",
   "networkType": "quorum",
   "devdoc": {
     "kind": "dev",

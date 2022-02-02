@@ -8951,12 +8951,12 @@
     "1337": {
       "events": {},
       "links": {},
-      "address": "0x7cb50610e7e107b09acf3FBB8724C6df3f3e1c1d",
-      "transactionHash": "0x6397f88cc18b7d4885dedd34d23df46013b34b7940ec4d6cc902c7478a515d1b"
+      "address": "0xd1b691E3DE533f72c25aD88a2aDf8296744BB738",
+      "transactionHash": "0xbe5b3fa13094b202a04d77681ad1df64b2e2f2c96edc7a7b33c46e308f783c66"
     }
   },
   "schemaVersion": "3.4.4",
-  "updatedAt": "2022-01-28T14:28:48.123Z",
+  "updatedAt": "2022-02-01T22:34:15.112Z",
   "networkType": "quorum",
   "devdoc": {
     "kind": "dev",
