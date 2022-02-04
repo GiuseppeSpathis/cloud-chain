@@ -4,9 +4,6 @@ from time import time
 
 import argparse
 
-from eth_abi import encode_abi, is_encodable
-from eth_typing import ChecksumAddress
-from eth_utils import is_checksum_address
 from web3 import Web3
 from web3.auto import w3
 from web3.middleware import geth_poa_middleware
@@ -52,7 +49,7 @@ def get_contract_abi(compiled_contract_path: str) -> list:
     return contract_abi
 
 
-def sign_transaction(tx: dict, pk: str, label: str):
+def sign_send_transaction(tx: dict, pk: str, label: str):
     if DEBUG:
         print('-- Start sign transaction --')
         print(f'{label}: {json.dumps(tx, indent=4, sort_keys=True)}')
@@ -74,7 +71,6 @@ def cloud_sla_creation_activation():
     contract_factory = w3.eth.contract(address=FACTORY_ADDRESS, abi=factory_abi)
     contract_oracle = w3.eth.contract(address=ORACLE_ADDRESS, abi=oracle_abi)
 
-    w3.eth.default_account = accounts[0]
     price = Web3.toWei(5, 'ether')
     test_validity_duration = 60 ** 2
     tx_create_child = contract_factory.functions.createChild(
@@ -89,9 +85,8 @@ def cloud_sla_creation_activation():
         'from': accounts[0],
         'nonce': w3.eth.get_transaction_count(accounts[0])
     })
-    sign_transaction(tx_create_child, private_keys[0], label='create_child')
+    sign_send_transaction(tx_create_child, private_keys[0], label='create_child')
 
-    w3.eth.defaultAccount = accounts[1]
     tx_sm_address = contract_factory.functions.getSmartContractAddress(
         accounts[1]
     ).call()
@@ -105,28 +100,55 @@ def cloud_sla_creation_activation():
         'nonce': w3.eth.get_transaction_count(accounts[1]),
         'value': price
     })
-    sign_transaction(tx_deposit, private_keys[1], label='deposit')
+    sign_send_transaction(tx_deposit, private_keys[1], label='deposit')
 
     return tx_sm_address
 
 
 def upload(cloud_sla_address):
-    hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'.encode()
+    hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
     cloud_sla_abi = get_contract_abi(COMPILED_CLOUD_SLA_PATH)
     contract_cloud_sla = w3.eth.contract(address=cloud_sla_address, abi=cloud_sla_abi)
-    # print(encode_abi(['bytes32'], [hash_digest]).hex())
+
     challenge = Web3.keccak(
-        contract_cloud_sla.encodeABI(fn_name='UploadRequest', args=['test.pdf', hash_digest])
+        hexstr=contract_cloud_sla.encodeABI(fn_name='UploadRequest', args=['test.pdf', hash_digest])
     )
-    print(f'Challenge: {challenge}')
+
+    tx_upload_request = contract_cloud_sla.functions.UploadRequest(
+        'test.pdf',
+        challenge
+    ).buildTransaction({
+        'gasPrice': 0,
+        'from': accounts[1],
+        'nonce': w3.eth.get_transaction_count(accounts[1])
+    })
+    sign_send_transaction(tx_upload_request, private_keys[1], 'upload_request')
+
+    tx_upload_request_ack = contract_cloud_sla.functions.UploadRequestAck(
+        'test.pdf'
+    ).buildTransaction({
+        'gasPrice': 0,
+        'from': accounts[0],
+        'nonce': w3.eth.get_transaction_count(accounts[0])
+    })
+    sign_send_transaction(tx_upload_request_ack, private_keys[0], 'upload_request_ack')
+
+    tx_upload_transfer_ack = contract_cloud_sla.functions.UploadTransferAck(
+        'test.pdf',
+        hash_digest
+    ).buildTransaction({
+        'gasPrice': 0,
+        'from': accounts[0],
+        'nonce': w3.eth.get_transaction_count(accounts[0])
+    })
+    sign_send_transaction(tx_upload_transfer_ack, private_keys[0], 'upload_transfer_ack')
 
 
 def read(cloud_sla_address):
     cloud_sla_abi = get_contract_abi(COMPILED_CLOUD_SLA_PATH)
     contract_cloud_sla = w3.eth.contract(address=cloud_sla_address, abi=cloud_sla_abi)
 
-    w3.eth.defaultAccount = accounts[1]
     tx_read_request = contract_cloud_sla.functions.ReadRequest(
         'test.pdf'
     ).buildTransaction({
@@ -134,7 +156,7 @@ def read(cloud_sla_address):
         'from': accounts[1],
         'nonce': w3.eth.get_transaction_count(accounts[1])
     })
-    sign_transaction(tx_read_request, private_keys[1], label='read_request')
+    sign_send_transaction(tx_read_request, private_keys[1], label='read_request')
 
     w3.eth.defaultAccount = accounts[0]
     tx_read_request_ack = contract_cloud_sla.functions.ReadRequestAck(
@@ -145,7 +167,7 @@ def read(cloud_sla_address):
         'from': accounts[0],
         'nonce': w3.eth.get_transaction_count(accounts[0])
     })
-    sign_transaction(tx_read_request_ack, private_keys[0], label='read_request_ack')
+    sign_send_transaction(tx_read_request_ack, private_keys[0], label='read_request_ack')
 
 
 def main():
@@ -161,8 +183,9 @@ def main():
     print(f'avg_durations: {round(sum(durations) / len(durations), 2)}')
     '''
     cloud_sla_address = cloud_sla_creation_activation()
-    # read(cloud_sla_address)
+    print(f'cloud_sla_address: {cloud_sla_address}')
     upload(cloud_sla_address)
+    read(cloud_sla_address)
 
 
 if __name__ == '__main__':
