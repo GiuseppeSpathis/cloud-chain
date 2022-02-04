@@ -62,7 +62,11 @@ def sign_send_transaction(tx: dict, pk: str, label: str):
         tx_receipt_json = json.loads(Web3.toJSON(tx_receipt))
         print(f'{label}_receipt: {json.dumps(tx_receipt_json, indent=4, sort_keys=True)}')
         print('-- End sign transaction --')
+    return tx_receipt
 
+def print_transaction_receipt(tx_receipt:dict, label:str):
+    tx_receipt_json = json.loads(Web3.toJSON(tx_receipt))
+    print(f'{label}_receipt: {json.dumps(tx_receipt_json, indent=4, sort_keys=True)}')
 
 def cloud_sla_creation_activation():
     factory_abi = get_contract_abi(COMPILED_FACTORY_PATH)
@@ -153,21 +157,48 @@ def read(cloud_sla_address):
         'test.pdf'
     ).buildTransaction({
         'gasPrice': 0,
-        'from': accounts[1],
+        'from':accounts[1],
         'nonce': w3.eth.get_transaction_count(accounts[1])
     })
-    sign_send_transaction(tx_read_request, private_keys[1], label='read_request')
+    recepit_read=sign_send_transaction(tx_read_request, private_keys[1], label='read_request')
 
-    w3.eth.defaultAccount = accounts[0]
     tx_read_request_ack = contract_cloud_sla.functions.ReadRequestAck(
         'test.pdf',
         'www.test.com'
     ).buildTransaction({
         'gasPrice': 0,
-        'from': accounts[0],
+        'from':accounts[0],
         'nonce': w3.eth.get_transaction_count(accounts[0])
     })
-    sign_send_transaction(tx_read_request_ack, private_keys[0], label='read_request_ack')
+    recepit_read_ack=sign_send_transaction(tx_read_request_ack, private_keys[0], label='read_request_ack')
+    #print_transaction_receipt(recepit_read,"read")
+    #print_transaction_receipt(recepit_read_ack,"read_ack")
+
+
+def delete(cloud_sla_address):
+    cloud_sla_abi = get_contract_abi(COMPILED_CLOUD_SLA_PATH)
+    contract_cloud_sla = w3.eth.contract(address=cloud_sla_address, abi=cloud_sla_abi)
+
+    tx_delete_request = contract_cloud_sla.functions.DeleteRequest(
+        'test.pdf'
+    ).buildTransaction({
+        'gasPrice': 0,
+        'from':accounts[1],
+        'nonce': w3.eth.get_transaction_count(accounts[1])
+    })
+    sign_send_transaction(tx_delete_request, private_keys[1], label='delete_request')
+
+    tx_delete = contract_cloud_sla.functions.Delete(
+        'test.pdf',
+    ).buildTransaction({
+        'gasPrice': 0,
+        'from':accounts[0],
+        'nonce': w3.eth.get_transaction_count(accounts[0])
+    })
+    sign_send_transaction(tx_delete, private_keys[0], label='delete')
+    #print_transaction_receipt(recepit_read,"read")
+    #print_transaction_receipt(recepit_read_ack,"read_ack")
+    
 
 
 def main():
@@ -186,6 +217,7 @@ def main():
     print(f'cloud_sla_address: {cloud_sla_address}')
     upload(cloud_sla_address)
     read(cloud_sla_address)
+    delete(cloud_sla_address)
 
 
 if __name__ == '__main__':
