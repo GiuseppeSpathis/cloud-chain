@@ -3,6 +3,7 @@ const HDWalletProvider = require('truffle-hdwallet-provider');
 const Web3 = require('web3');
 const wsProvider = new Web3.providers.WebsocketProvider('ws://localhost:8546');
 const httpProvider = new Web3.providers.HttpProvider('http://localhost:8545');
+var pkPolygon = require('./polygon/src/private_keys.json');
 
 // insert the private key of the accounts
 // address of account 0 (12 in metamask) : 0xFE3B557E8Fb62b89F4916B721be55cEb828dBd73
@@ -12,12 +13,8 @@ const privateKeys = [
     '0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3',
     '0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f',
 ];
-const polygonPrivateKeys = [
-    '0xfa8c34684f6321f6694670b80d84b2aea4c050e3af9de52eaff7161a2547f18d',
-    '0xa203f405515611f7779be34f1a3319e9dfb245b07824a7e9573ca1dbcb2c129e',
-    '0x45e0cc52b902c8400490c51a4d3711bc53ae5d2d655a5bb4df5f1f3861c9de6c',
-];
-
+//const polygonPrivateKeys = [ '0x70c796883d614c0b77b53c8d4371772ea1edd2e2527706e4879c6e84179273df' , '0xb283ac8163deff09ba0700e64d3496ab83f9c8a0a85f254fe907cdb7beab379a' , '0xe583b446b20cfba9947c56b0998808824eac509a6c26718eae59da7a2d99c520' , '0xe2c2ffde111be1ba4de14b969af9a1dde837a9d3d5034ac940047bbbf3cdb7bc' ];
+const polygonPrivateKeys = pkPolygon.privatekey
 module.exports = {
     // See <http://truffleframework.com/docs/advanced/configuration>
     // for more about customizing your Truffle configuration!

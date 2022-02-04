@@ -1,3 +1,5 @@
+import json
+
 HTTP_URI = 'http://127.0.0.1:8545'
 WEB_SOCKET_URI = 'ws://127.0.0.1:8546'
 
@@ -23,15 +25,11 @@ quorum_private_keys = [
     '0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f'
 ]
 
-polygon_accounts = [
-    '0x535BD8842Ff6b1df5464Db71E88d2Cf745A0D05a',
-    '0x61FE67D9e48106306648A6981cbe5858628eb5E1',
-    '0xC1Ce14C9e920e8F2C6BE67171D5f41E698792d06'
-]
-polygon_private_keys = [
-    '0x44e443dbfd962f4d293df65f724dcd463ae3a5964942e01b7e93f5e3bc625dad',
-    '0x26b7d6d01c6579aece806723d2613d77f43e52eed9d6ef178aa77be2f24a3bac',
-    '0xbf442d3e103c1d8f6de9148063b87d3c7bbda971f4361614d662635566e3499e'
-]
+with open('../polygon/src/address.json') as file:
+    polygon_accounts = json.loads(file.read())['address']
+    
+with open('../polygon/src/private_keys.json') as file:
+    polygon_private_keys = json.loads(file.read())['privatekey']
+
 
 DEBUG = False
