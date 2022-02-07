@@ -1,6 +1,10 @@
 import json
 
 import argparse
+import random
+import threading
+
+from time import (strftime, gmtime, time)
 
 from eth_typing import Address
 from web3 import Web3
@@ -12,8 +16,14 @@ from settings import (
     COMPILED_FACTORY_PATH,
     COMPILED_ORACLE_PATH,
     COMPILED_CLOUD_SLA_PATH,
-    WEB_SOCKET_URI
+    WEB_SOCKET_URI, DEBUG
 )
+
+
+def get_thread_time(function_name, index):
+    print(f'Start process#{index} at time {strftime("%H:%M:%S", gmtime(time()))}')
+    eval(function_name + "()")
+    print(f'End process#{index} at time {strftime("%H:%M:%S", gmtime(time()))}', end='\n\n')
 
 
 def get_addresses(blockchain: str) -> tuple:
@@ -101,8 +111,10 @@ def cloud_sla_creation_activation():
     })
     sign_send_transaction(tx_deposit, private_keys[1])
 
-    print('CloudSLA creation and activation: OK')
-    print(f'\taddress: {tx_sm_address}')
+    if DEBUG:
+        print('CloudSLA creation and activation: OK')
+        print(f'\taddress: {tx_sm_address}')
+
     return tx_sm_address
 
 
@@ -330,7 +342,11 @@ def corrupted_file_check():
 def main():
     global cloud_sla_address
 
-    cloud_sla_address = cloud_sla_creation_activation()
+    for idx in range(10):
+        t_inter = random.expovariate(.5)
+        th = threading.Thread(target=get_thread_time('cloud_sla_creation_activation', idx))
+
+    '''
     upload()
     read()
     delete()
@@ -339,6 +355,7 @@ def main():
     read_deny_lost_file_check()
     another_file_upload_read()
     corrupted_file_check()
+    '''
 
 
 if __name__ == '__main__':
