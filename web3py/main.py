@@ -15,8 +15,6 @@ from settings import (
     WEB_SOCKET_URI
 )
 
-cloud_sla_address = Address(b'0x0')
-
 
 def get_addresses(blockchain: str) -> tuple:
     if blockchain == 'polygon':
@@ -108,11 +106,7 @@ def cloud_sla_creation_activation():
     return tx_sm_address
 
 
-def upload():
-    # Parameters
-    filepath = 'test.pdf'
-    hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
-
+def sequence_upload(filepath: str, hash_digest: str):
     # Contract
     contract_cloud_sla = get_contract(cloud_sla_address, COMPILED_CLOUD_SLA_PATH)
 
@@ -150,14 +144,8 @@ def upload():
     })
     sign_send_transaction(tx_upload_transfer_ack, private_keys[0])
 
-    print('Upload: OK')
 
-
-def read():
-    # Parameters
-    filepath = 'test.pdf'
-    url = 'www.test.com'
-
+def sequence_read(filepath: str, url: str):
     # Contract
     contract_cloud_sla = get_contract(cloud_sla_address, COMPILED_CLOUD_SLA_PATH)
 
@@ -180,6 +168,59 @@ def read():
         'nonce': w3.eth.get_transaction_count(accounts[0])
     })
     sign_send_transaction(tx_read_request_ack, private_keys[0])
+
+
+def sequence_file(filepath: str, url: str, hash_digest: str):
+    # Contracts
+    contract_cloud_sla = get_contract(cloud_sla_address, COMPILED_CLOUD_SLA_PATH)
+    contract_oracle = get_contract(ORACLE_ADDRESS, COMPILED_ORACLE_PATH)
+
+    # Transactions
+    tx_file_hash_request = contract_cloud_sla.functions.FileHashRequest(
+        filepath
+    ).buildTransaction({
+        'gasPrice': 0,
+        'from': accounts[1],
+        'nonce': w3.eth.get_transaction_count(accounts[1])
+    })
+    sign_send_transaction(tx_file_hash_request, private_keys[1])
+
+    tx_digit_store = contract_oracle.functions.DigestStore(
+        url,
+        hash_digest
+    ).buildTransaction({
+        'gasPrice': 0,
+        'from': accounts[2],
+        'nonce': w3.eth.get_transaction_count(accounts[2])
+    })
+    sign_send_transaction(tx_digit_store, private_keys[2])
+
+    tx_file_check = contract_cloud_sla.functions.FileCheck(
+        filepath
+    ).buildTransaction({
+        'gasPrice': 0,
+        'from': accounts[1],
+        'nonce': w3.eth.get_transaction_count(accounts[1])
+    })
+    sign_send_transaction(tx_file_check, private_keys[1])
+
+
+def upload():
+    # Parameters
+    filepath = 'test.pdf'
+    hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
+
+    sequence_upload(filepath, hash_digest)
+
+    print('Upload: OK')
+
+
+def read():
+    # Parameters
+    filepath = 'test.pdf'
+    url = 'www.test.com'
+
+    sequence_read(filepath, url)
 
     print('Read: OK')
 
@@ -219,38 +260,7 @@ def file_check_undeleted_file():
     url = 'www.test.com'
     hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-    # Contracts
-    contract_cloud_sla = get_contract(cloud_sla_address, COMPILED_CLOUD_SLA_PATH)
-    contract_oracle = get_contract(ORACLE_ADDRESS, COMPILED_ORACLE_PATH)
-
-    # Transactions
-    tx_file_hash_request = contract_cloud_sla.functions.FileHashRequest(
-        filepath
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[1],
-        'nonce': w3.eth.get_transaction_count(accounts[1])
-    })
-    sign_send_transaction(tx_file_hash_request, private_keys[1])
-
-    tx_digit_store = contract_oracle.functions.DigestStore(
-        url,
-        hash_digest
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[2],
-        'nonce': w3.eth.get_transaction_count(accounts[2])
-    })
-    sign_send_transaction(tx_digit_store, private_keys[2])
-
-    tx_file_check = contract_cloud_sla.functions.FileCheck(
-        filepath
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[1],
-        'nonce': w3.eth.get_transaction_count(accounts[1])
-    })
-    sign_send_transaction(tx_file_check, private_keys[1])
+    sequence_file(filepath, url, hash_digest)
 
     print('File check for undeleted file: OK')
 
@@ -260,42 +270,7 @@ def another_file_upload():
     filepath = 'test2.pdf'
     hash_digest = '0x1f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-    # Contract
-    contract_cloud_sla = get_contract(cloud_sla_address, COMPILED_CLOUD_SLA_PATH)
-
-    # Transactions
-    challenge = Web3.solidityKeccak(
-        ['bytes32'], [hash_digest]
-    )
-
-    tx_upload_request = contract_cloud_sla.functions.UploadRequest(
-        filepath,
-        challenge
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[1],
-        'nonce': w3.eth.get_transaction_count(accounts[1])
-    })
-    sign_send_transaction(tx_upload_request, private_keys[1])
-
-    tx_upload_request_ack = contract_cloud_sla.functions.UploadRequestAck(
-        filepath
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[0],
-        'nonce': w3.eth.get_transaction_count(accounts[0])
-    })
-    sign_send_transaction(tx_upload_request_ack, private_keys[0])
-
-    tx_upload_transfer_ack = contract_cloud_sla.functions.UploadTransferAck(
-        filepath,
-        hash_digest
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[0],
-        'nonce': w3.eth.get_transaction_count(accounts[0])
-    })
-    sign_send_transaction(tx_upload_transfer_ack, private_keys[0])
+    sequence_upload(filepath, hash_digest)
 
     print('Another file upload: OK')
 
@@ -335,61 +310,8 @@ def another_file_upload_read():
     url = 'www.test3.com'
     hash_digest = '0x2f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-    # Contract
-    contract_cloud_sla = get_contract(cloud_sla_address, COMPILED_CLOUD_SLA_PATH)
-
-    # Transactions
-    challenge = Web3.solidityKeccak(
-        ['bytes32'], [hash_digest]
-    )
-
-    tx_upload_request = contract_cloud_sla.functions.UploadRequest(
-        filepath,
-        challenge
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[1],
-        'nonce': w3.eth.get_transaction_count(accounts[1])
-    })
-    sign_send_transaction(tx_upload_request, private_keys[1])
-
-    tx_upload_request_ack = contract_cloud_sla.functions.UploadRequestAck(
-        filepath
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[0],
-        'nonce': w3.eth.get_transaction_count(accounts[0])
-    })
-    sign_send_transaction(tx_upload_request_ack, private_keys[0])
-
-    tx_upload_transfer_ack = contract_cloud_sla.functions.UploadTransferAck(
-        filepath,
-        hash_digest
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[0],
-        'nonce': w3.eth.get_transaction_count(accounts[0])
-    })
-    sign_send_transaction(tx_upload_transfer_ack, private_keys[0])
-
-    tx_read_request = contract_cloud_sla.functions.ReadRequest(
-        filepath
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[1],
-        'nonce': w3.eth.get_transaction_count(accounts[1])
-    })
-    sign_send_transaction(tx_read_request, private_keys[1])
-
-    tx_read_request_ack = contract_cloud_sla.functions.ReadRequestAck(
-        filepath,
-        url
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[0],
-        'nonce': w3.eth.get_transaction_count(accounts[0])
-    })
-    sign_send_transaction(tx_read_request_ack, private_keys[0])
+    sequence_upload(filepath, hash_digest)
+    sequence_read(filepath, url)
 
     print('Another file upload + read: OK')
 
@@ -400,38 +322,7 @@ def corrupted_file_check():
     url = 'www.test3.com'
     hash_digest = '0x4f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-    # Contracts
-    contract_cloud_sla = get_contract(cloud_sla_address, COMPILED_CLOUD_SLA_PATH)
-    contract_oracle = get_contract(ORACLE_ADDRESS, COMPILED_ORACLE_PATH)
-
-    # Transactions
-    tx_file_hash_request = contract_cloud_sla.functions.FileHashRequest(
-        filepath
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[1],
-        'nonce': w3.eth.get_transaction_count(accounts[1])
-    })
-    sign_send_transaction(tx_file_hash_request, private_keys[1])
-
-    tx_digit_store = contract_oracle.functions.DigestStore(
-        url,
-        hash_digest
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[2],
-        'nonce': w3.eth.get_transaction_count(accounts[2])
-    })
-    sign_send_transaction(tx_digit_store, private_keys[2])
-
-    tx_file_check = contract_cloud_sla.functions.FileCheck(
-        filepath
-    ).buildTransaction({
-        'gasPrice': 0,
-        'from': accounts[1],
-        'nonce': w3.eth.get_transaction_count(accounts[1])
-    })
-    sign_send_transaction(tx_file_check, private_keys[1])
+    sequence_file(filepath, url, hash_digest)
 
     print('File Check for corrupted file: OK')
 
@@ -463,6 +354,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     FACTORY_ADDRESS, ORACLE_ADDRESS = get_addresses(args.settings)
+    cloud_sla_address = Address(b'0x0')
+
     accounts, private_keys = get_settings(args.settings)
 
     if not w3.isConnected():
