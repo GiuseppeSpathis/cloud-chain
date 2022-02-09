@@ -17,12 +17,16 @@ from settings import (
     COMPILED_CLOUD_SLA_PATH,
     DEBUG, HTTP_URI
 )
-def between_callback(count_proc):
+
+
+def between_callback(process_count):
+    # TODO manage args for all functions
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
-    loop.run_until_complete(cloud_sla_creation_activation(count_proc))
+    loop.run_until_complete(cloud_sla_creation_activation(process_count))
     loop.close()
+
 
 def get_addresses(blockchain: str) -> tuple:
     if blockchain == 'polygon':
@@ -69,9 +73,9 @@ async def sign_send_transaction(tx: dict, pk: str):
     return tx_receipt
 
 
-async def cloud_sla_creation_activation(count):
+async def cloud_sla_creation_activation(process_count):
     start = datetime.now()
-    print(f'Start process#{count} at time {start.strftime("%H:%M:%S.%f")}')
+    print(f'Start process#{process_count} at time {start.strftime("%H:%M:%S.%f")}')
     # Parameters
     price = Web3.toWei(5, 'ether')
     test_validity_duration = 60 ** 2
@@ -115,44 +119,27 @@ async def cloud_sla_creation_activation(count):
         print('CloudSLA creation and activation: OK')
         print(f'\taddress: {tx_sm_address}')
     end = datetime.now()
-    print(f'End process#{count} at time {end.strftime("%H:%M:%S.%f")}', end='\n\n')
+    print(f'End process#{process_count} at time {end.strftime("%H:%M:%S.%f")}', end='\n\n')
     return tx_sm_address
-
 
 
 async def main():
     global cloud_sla_address
 
-    idx = 0
-
-    '''while True:
-        start = datetime.now()
-        print(f'Start process#{idx} at time {start.strftime("%H:%M:%S.%f")}')
-        cloud_sla_address = await cloud_sla_creation_activation()
-        end = datetime.now()
-        print(f'End process#{idx} at time {end.strftime("%H:%M:%S.%f")}', end='\n\n')
-        idx += 1'''
-
     threads = 10  # Number of threads to create
     jobs = []
     for i in range(0, threads):
-        # out_list = list()
-
         thread = threading.Thread(target=between_callback, args=[i])
-        #thread.start()
-
         jobs.append(thread)
 
-    # Start the threads (i.e. calculate the random number lists)
+    # Start the threads
     for j in jobs:
         j.start()
         await asyncio.sleep(.2)
 
-    # Ensure all of the threads have finished
+    # Ensure all the threads have finished
     for j in jobs:
         j.join()
-
-
 
 
 if __name__ == '__main__':
