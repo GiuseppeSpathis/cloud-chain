@@ -1,8 +1,6 @@
 import json
 
 import argparse
-import random
-import threading
 
 from time import (strftime, gmtime, time)
 
@@ -342,11 +340,7 @@ def corrupted_file_check():
 def main():
     global cloud_sla_address
 
-    for idx in range(10):
-        t_inter = random.expovariate(.5)
-        th = threading.Thread(target=get_thread_time('cloud_sla_creation_activation', idx))
-
-    '''
+    cloud_sla_address = cloud_sla_creation_activation()
     upload()
     read()
     delete()
@@ -355,7 +349,6 @@ def main():
     read_deny_lost_file_check()
     another_file_upload_read()
     corrupted_file_check()
-    '''
 
 
 if __name__ == '__main__':
