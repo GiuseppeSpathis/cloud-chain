@@ -29,7 +29,7 @@ then
         node_ids[$i]=${NODE_ID// /}
     done
     
-    ../bin/polygon-sdk genesis --consensus ibft --ibft-validators-prefix-path test-chain- --bootnode "/ip4/127.0.0.1/tcp/10001/p2p/${node_ids[1]}" --bootnode "/ip4/127.0.0.1/tcp/20001/p2p/${node_ids[2]}" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000 &> /dev/null
+    ../bin/polygon-sdk genesis --consensus ibft --ibft-validators-prefix-path test-chain- --bootnode "/ip4/127.0.0.1/tcp/10001/p2p/${node_ids[1]}" --bootnode "/ip4/127.0.0.1/tcp/20001/p2p/${node_ids[2]}" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000 --block-gas-limit 16234336 &> /dev/null
     
 
     #output file private_key

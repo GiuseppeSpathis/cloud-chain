@@ -74,6 +74,8 @@ async def sign_send_transaction(tx: dict, pk: str):
 
 
 async def cloud_sla_creation_activation(process_count):
+    global nonces
+
     start = datetime.now()
     print(f'Start process#{process_count} at time {start.strftime("%H:%M:%S.%f")}')
     # Parameters
@@ -95,7 +97,7 @@ async def cloud_sla_creation_activation(process_count):
     ).buildTransaction({
         'gasPrice': 0,
         'from': accounts[0],
-        'nonce': await w3_async.eth.get_transaction_count(accounts[0])
+        'nonce': nonces[0] + process_count
     })
     await sign_send_transaction(tx_create_child, private_keys[0])
 
@@ -110,7 +112,7 @@ async def cloud_sla_creation_activation(process_count):
     tx_deposit = contract_cloud_sla.functions.Deposit().buildTransaction({
         'gasPrice': 0,
         'from': accounts[1],
-        'nonce': await w3_async.eth.get_transaction_count(accounts[1]),
+        'nonce': nonces[1] + process_count,
         'value': price
     })
     await sign_send_transaction(tx_deposit, private_keys[1])
@@ -126,16 +128,16 @@ async def cloud_sla_creation_activation(process_count):
 async def main():
     global cloud_sla_address
 
-    threads = 10  # Number of threads to create
+    threads = 100  # Number of threads to create
     jobs = []
-    for i in range(0, threads):
+    for i in range(threads):
         thread = threading.Thread(target=between_callback, args=[i])
         jobs.append(thread)
 
     # Start the threads
     for j in jobs:
         j.start()
-        await asyncio.sleep(.2)
+        # await asyncio.sleep(5)
 
     # Ensure all the threads have finished
     for j in jobs:
@@ -170,5 +172,9 @@ if __name__ == '__main__':
     w3 = Web3(HTTPProvider(HTTP_URI))
     w3.middleware_onion.inject(geth_poa_middleware, layer=0)
     print(f'-- Connection established --')
+
+    nonces = []
+    for idx in range(3):
+        nonces.append(w3.eth.get_transaction_count(accounts[idx]))
 
     exit(asyncio.run(main()))
