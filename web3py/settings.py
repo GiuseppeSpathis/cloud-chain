@@ -10,8 +10,8 @@ COMPILED_CLOUD_SLA_PATH = '../build/contracts/CloudSLA.json'
 QUORUM_FACTORY_ADDRESS = '0x9a3DBCa554e9f6b9257aAa24010DA8377C57c17e'
 QUORUM_ORACLE_ADDRESS = '0xb9A219631Aed55eBC3D998f17C3840B7eC39C0cc'
 
-POLYGON_FACTORY_ADDRESS = '0x393eb04Cba32F3f3ccE644Df92402D93336CA439'
-POLYGON_ORACLE_ADDRESS = '0x14B7DeEC236F414Bc4eA2d417432126Ad8f7C7fC'
+POLYGON_FACTORY_ADDRESS = '0x4f55866f96CdFfB9D8AEc2d8D17138D5f9625037'
+POLYGON_ORACLE_ADDRESS = '0x117eB724c549fCcb78B247c0a9a192A4dB11eBE6'
 
 # Preloaded accounts
 quorum_accounts = [
@@ -31,4 +31,4 @@ with open('../polygon/src/address.json') as file:
 with open('../polygon/src/private_keys.json') as file:
     polygon_private_keys = json.loads(file.read())['privatekey']
 
-DEBUG = True
+DEBUG = False
