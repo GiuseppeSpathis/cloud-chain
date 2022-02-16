@@ -24,6 +24,7 @@ async def get_time(func_to_run: str, process_count: int):
     if 'cloud_sla_creation_activation' not in func_to_run:
         cloud_address, _ = await obj.cloud_sla_creation_activation()
         # TODO check middle statuses?
+        # TODO count middle time
         func_to_run = func_to_run.replace(')', f"'{cloud_address}')")
 
     start = datetime.now()
@@ -49,17 +50,17 @@ async def get_time(func_to_run: str, process_count: int):
 
 
 async def main():
-    threads = 100  # Number of threads to create
+    threads = 10  # Number of threads to create
     jobs = []
 
     for idx in range(threads):
-        thread = threading.Thread(target=between_callback, args=[idx, 'obj.cloud_sla_creation_activation'])
+        thread = threading.Thread(target=between_callback, args=[idx, 'obj.upload'])
         jobs.append(thread)
 
     # Start the threads
     for j in jobs:
         j.start()
-        await asyncio.sleep(0.6)
+        await asyncio.sleep(0.4)
 
     # Ensure all the threads have finished
     for j in jobs:
