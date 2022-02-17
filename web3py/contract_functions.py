@@ -1,16 +1,19 @@
+import asyncio
+import threading
+
 from eth_typing import Address
 from web3 import Web3, AsyncHTTPProvider, HTTPProvider
 from web3.eth import AsyncEth
 from web3.middleware import geth_poa_middleware
 
-from settings import HTTP_URI, COMPILED_FACTORY_PATH, COMPILED_ORACLE_PATH, COMPILED_CLOUD_SLA_PATH
+from settings import HTTP_URI, COMPILED_FACTORY_PATH, COMPILED_ORACLE_PATH, COMPILED_CLOUD_SLA_PATH, DEBUG
 from utility import get_addresses, get_settings, get_contract, check_statuses
 
 
 class ContractTest:
-    def __init__(self, settings):
-        self.factory_address, self.oracle_address = get_addresses(settings)
-        self.accounts, self.private_keys = get_settings(settings)
+    def __init__(self, blockchain):
+        self.factory_address, self.oracle_address = get_addresses(blockchain)
+        self.accounts, self.private_keys = get_settings(blockchain)
 
         self.w3_async = Web3(
             AsyncHTTPProvider(HTTP_URI),
@@ -23,8 +26,30 @@ class ContractTest:
         self.w3 = Web3(HTTPProvider(HTTP_URI))
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
+        self.lock = threading.Lock()
+        self.nonces = []
+        for idx in range(3):
+            self.nonces.append(self.w3.eth.get_transaction_count(self.accounts[idx]))
+
     async def get_nonce(self, idx: int):
-        return await self.w3_async.eth.get_transaction_count(self.accounts[idx])
+        # self.lock.acquire()
+        nonce = await self.w3_async.eth.get_transaction_count(self.accounts[idx])
+        # self.lock.release()
+        return nonce
+
+    async def get_nonce_lock(self, idx: int):
+        self.lock.acquire()
+        await asyncio.sleep(.1)
+        tmp = self.nonces[idx]
+        self.nonces[idx] = self.nonces[idx] + 1
+        self.lock.release()
+        return tmp
+
+    async def update_nonces(self):
+        self.lock.acquire()
+        for i in range(3):
+            self.nonces[i] = await self.w3_async.eth.get_transaction_count(self.accounts[i])
+        self.lock.release()
 
     async def sign_send_transaction(self, tx: dict, pk: str) -> int:
         try:
@@ -33,13 +58,15 @@ class ContractTest:
             tx_receipt = await self.w3_async.eth.wait_for_transaction_receipt(tx_hash)
 
             return tx_receipt['status']
-        except (RuntimeError, TypeError, NameError):
-            print('error')
+        except ValueError as v:
+            print(f'ValueError [sign_send]: {v}')
+            return 0
 
     async def cloud_sla_creation_activation(self) -> tuple:
         statuses = []
+
         # Parameters
-        price = Web3.toWei(0.001, 'ether')
+        price = Web3.toWei(0.001, 'ether')  # 5
         test_validity_duration = 60 ** 2
 
         # Contracts
@@ -77,15 +104,17 @@ class ContractTest:
         })
         statuses.append(await self.sign_send_transaction(tx_deposit, self.private_keys[1]))
 
-        print('CloudSLA creation and activation: OK')
-        print(f'\taddress: {tx_sm_address}')
+        all_statuses = check_statuses(statuses)
 
-        all_status_ok = check_statuses(statuses)
+        if all_statuses and DEBUG:
+            print('CloudSLA creation and activation: OK')
+            print(f'\taddress: {tx_sm_address}')
 
-        return tx_sm_address, all_status_ok
+        return tx_sm_address, all_statuses
 
-    async def sequence_upload(self, cloud_address: Address, filepath: str, hash_digest: str) -> []:
+    async def sequence_upload(self, cloud_address: Address, filepath: str, hash_digest: str) -> bool:
         statuses = []
+
         # Contract
         contract_cloud_sla = get_contract(self.w3, cloud_address, COMPILED_CLOUD_SLA_PATH)
 
@@ -123,12 +152,13 @@ class ContractTest:
         })
         statuses.append(await self.sign_send_transaction(tx_upload_transfer_ack, self.private_keys[0]))
 
-        all_status_ok = check_statuses(statuses)
+        all_statuses = check_statuses(statuses)
 
-        return all_status_ok
+        return all_statuses
 
-    async def sequence_read(self, cloud_address: Address, filepath: str, url: str):
+    async def sequence_read(self, cloud_address: Address, filepath: str, url: str) -> bool:
         statuses = []
+
         # Contract
         contract_cloud_sla = get_contract(self.w3, cloud_address, COMPILED_CLOUD_SLA_PATH)
 
@@ -152,11 +182,11 @@ class ContractTest:
         })
         statuses.append(await self.sign_send_transaction(tx_read_request_ack, self.private_keys[0]))
 
-        all_status_ok = check_statuses(statuses)
+        all_statuses = check_statuses(statuses)
 
-        return all_status_ok
+        return all_statuses
 
-    async def sequence_file(self, cloud_address: Address, filepath: str, url: str, hash_digest: str):
+    async def sequence_file(self, cloud_address: Address, filepath: str, url: str, hash_digest: str) -> bool:
         statuses = []
 
         # Contracts
@@ -192,32 +222,35 @@ class ContractTest:
         })
         statuses.append(await self.sign_send_transaction(tx_file_check, self.private_keys[1]))
 
-        all_status_ok = check_statuses(statuses)
+        all_statuses = check_statuses(statuses)
 
-        return all_status_ok
+        return all_statuses
 
     async def upload(self, cloud_address: Address) -> bool:
         # Parameters
         filepath = 'test.pdf'
         hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-        all_status_ok = await self.sequence_upload(cloud_address, filepath, hash_digest)
+        all_statuses = await self.sequence_upload(cloud_address, filepath, hash_digest)
 
-        print('Upload: OK')
+        if all_statuses and DEBUG:
+            print('Upload: OK')
 
-        return all_status_ok
+        return all_statuses
 
-    async def read(self, cloud_address: Address):
+    async def read(self, cloud_address: Address) -> bool:
         # Parameters
         filepath = 'test.pdf'
         url = 'www.test.com'
 
-        all_status_ok =await self.sequence_read(cloud_address, filepath, url)
+        all_statuses = await self.sequence_read(cloud_address, filepath, url)
 
-        print('Read: OK')
-        return all_status_ok
+        if all_statuses and DEBUG:
+            print('Read: OK')
 
-    async def delete(self, cloud_address: Address):
+        return all_statuses
+
+    async def delete(self, cloud_address: Address) -> bool:
         statuses = []
 
         # Parameter
@@ -245,34 +278,39 @@ class ContractTest:
         })
         statuses.append(await self.sign_send_transaction(tx_delete, self.private_keys[0]))
 
-        print('Delete: OK')
+        all_statuses = check_statuses(statuses)
 
-        all_status_ok = check_statuses(statuses)
+        if all_statuses and DEBUG:
+            print('Delete: OK')
 
-        return all_status_ok
+        return all_statuses
 
-    async def file_check_undeleted_file(self, cloud_address: Address):
+    async def file_check_undeleted_file(self, cloud_address: Address) -> bool:
         # Parameters
         filepath = 'test.pdf'
         url = 'www.test.com'
         hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-        await self.sequence_file(cloud_address, filepath, url, hash_digest)
+        all_statuses = await self.sequence_file(cloud_address, filepath, url, hash_digest)
 
-        print('File check for undeleted file: OK')
+        if all_statuses and DEBUG:
+            print('File check for undeleted file: OK')
+
+        return all_statuses
 
     async def another_file_upload(self, cloud_address: Address) -> bool:
         # Parameters
         filepath = 'test2.pdf'
         hash_digest = '0x1f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-        all_status_ok = await self.sequence_upload(cloud_address, filepath, hash_digest)
+        all_statuses = await self.sequence_upload(cloud_address, filepath, hash_digest)
 
-        print('Another file upload: OK')
+        if all_statuses and DEBUG:
+            print('Another file upload: OK')
 
-        return all_status_ok
+        return all_statuses
 
-    async def read_deny_lost_file_check(self, cloud_address: Address):
+    async def read_deny_lost_file_check(self, cloud_address: Address) -> bool:
         statuses = []
 
         # Parameter
@@ -300,32 +338,36 @@ class ContractTest:
         })
         statuses.append(await self.sign_send_transaction(tx_read_request_deny, self.private_keys[0]))
 
-        print('Read Deny with lost file check: OK')
+        all_statuses = check_statuses(statuses)
 
-        all_status_ok = check_statuses(statuses)
+        if all_statuses and DEBUG:
+            print('Read Deny with lost file check: OK')
 
-        return all_status_ok
+        return all_statuses
 
-    async def another_file_upload_read(self, cloud_address: Address):
+    async def another_file_upload_read(self, cloud_address: Address) -> bool:
         # Parameters
         filepath = 'test3.pdf'
         url = 'www.test3.com'
         hash_digest = '0x2f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-        all_status_ok1 = await self.sequence_upload(cloud_address, filepath, hash_digest)
-        all_status_ok2 = await self.sequence_read(cloud_address, filepath, url)
+        all_statuses_upload = await self.sequence_upload(cloud_address, filepath, hash_digest)
+        all_statuses_read = await self.sequence_read(cloud_address, filepath, url)
 
-        print('Another file upload + read: OK')
+        if all_statuses_upload and all_statuses_read and DEBUG:
+            print('Another file upload + read: OK')
 
-        return all_status_ok1 and all_status_ok2
+        return all_statuses_upload and all_statuses_read
 
-    async def corrupted_file_check(self, cloud_address: Address):
+    async def corrupted_file_check(self, cloud_address: Address) -> bool:
         # Parameters
         filepath = 'test3.pdf'
         url = 'www.test3.com'
         hash_digest = '0x4f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-        all_status_ok = await self.sequence_file(cloud_address, filepath, url, hash_digest)
+        all_statuses = await self.sequence_file(cloud_address, filepath, url, hash_digest)
 
-        print('File Check for corrupted file: OK')
-        return all_status_ok
+        if all_statuses and DEBUG:
+            print('File Check for corrupted file: OK')
+
+        return all_statuses

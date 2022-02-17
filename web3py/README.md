@@ -30,3 +30,8 @@
   - mean, min, max, median
 - ...
 - Is there a transient? (parallel requests)
+
+## Problems
+
+ - With low interarrival time the blockchain doesn't accept the nonce specified in the transactions, and it fails
+ - Re-run `cloud_sla_creation_activation()` to obtain new address instead of use the old one
