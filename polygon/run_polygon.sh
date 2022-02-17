@@ -1,44 +1,55 @@
-#! /bin/bash
+#!/bin/bash
 echo -n -e "Do you want create the network from zero? (yes/no)\n"
 read VAR
 declare -a addresses
 declare -a node_ids
 
 
+declare -i NUM_NODES=5
+
+
 if [ $VAR = "yes" ]
 then
+    echo -n -e "How many validators you want? (4, 8, 12)\n"
+    read num
+    if (($num!=4))| (($num != 8))| (($num != 12))
+    then
+        num=4
+    fi
+    NUM_NODES=$num
     rm -rf src
     mkdir src
     rm -rf polygon-network
     mkdir polygon-network
     mkdir polygon-network/tmp
     cd polygon-network
-    for i in 1 2 3 4
+
+    for (( c=1; c<=$NUM_NODES; c++ ))
     do
-       ../bin/polygon-sdk secrets init --data-dir node-$i >> ./tmp/out$i
+       ../bin/polygon-sdk secrets init --data-dir node-$c >> ./tmp/out$c
     done
     
-    for i in 1 2 3 4
+    for (( c=1; c<=$NUM_NODES; c++ ))
     do
-        INPUT=$(cat "./tmp/out$i")
+        INPUT=$(cat "./tmp/out$c")
         #Using as delimitator the = then focussing on the important data
         NODE_ID=$(echo $INPUT| cut -d'=' -f 3)
         TMP=$(echo $INPUT| cut -d'=' -f 2)
         ADDRESS=${TMP%N*}
-        addresses[$i]=${ADDRESS// /} #removing white-space
-        node_ids[$i]=${NODE_ID// /}
+        addresses[$c]=${ADDRESS// /} #removing white-space
+        node_ids[$c]=${NODE_ID// /}
     done
     
-    ../bin/polygon-sdk genesis --consensus ibft --ibft-validators-prefix-path test-chain- --bootnode "/ip4/127.0.0.1/tcp/10001/p2p/${node_ids[1]}" --bootnode "/ip4/127.0.0.1/tcp/20001/p2p/${node_ids[2]}" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000 --block-gas-limit 16234336 &> /dev/null
+    ../bin/polygon-sdk genesis --consensus ibft --ibft-validators-prefix-path node- --bootnode "/ip4/127.0.0.1/tcp/11001/p2p/${node_ids[1]}" --bootnode "/ip4/127.0.0.1/tcp/12001/p2p/${node_ids[2]}" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000  --block-gas-limit 16234336 &> /dev/null
     
 
     #output file private_key
     private_keys='{"privatekey":['
-    for i in 1 2 3 4
+    for (( c=1; c<=$NUM_NODES; c++ ))
         do
 
-            private_keys="${private_keys} \"0x$(cat './node-'$i'/consensus/validator.key')\""
-            if (($i!=4))
+            private_keys="${private_keys} \"0x$(cat './node-'$c'/consensus/validator.key')\""
+            if (($c!=$NUM_NODES))
             then
             private_keys="${private_keys} ,"
             fi
@@ -50,10 +61,10 @@ then
     
     #output file address
     address='{"address":['
-    for i in 1 2 3 4
+    for (( c=1; c<=$NUM_NODES; c++ ))
         do
-            address="${address} \"${addresses[$i]}\""
-            if (($i!=4))
+            address="${address} \"${addresses[$c]}\""
+            if (($c!=$NUM_NODES))
             then
             address="${address} ,"
             fi
@@ -64,25 +75,29 @@ then
     echo -e "Network initialized correctly\n"
 
 
-    for i in 1 2 3 4
+    for (( c=1; c<=$NUM_NODES; c++ ))
         do
-            rm -rf ./tmp/out$i
+            rm -rf ./tmp/out$c
         done
 else
     cd polygon-network
 fi
 
-
+    for (( c=1; c<=$NUM_NODES; c++ ))
+        do
+            tmp=$((c+10))
+            command_run="${command_run} ../bin/polygon-sdk server --data-dir ./node-${c} --chain genesis.json --grpc :${tmp}000 --libp2p :${tmp}001 --jsonrpc :${tmp}002 --seal &"
+            if (($c==$NUM_NODES))
+            then
+            command_run="${command_run} ../bin/polygon-sdk server --chain genesis.json --dev --log-level debug"
+            fi
+        done
+   
 
 echo -n -e "Do you want run the newtork (yes/no)\n"
 read VAR
 if [ $VAR = "yes" ]
 then
-    
-    ../bin/polygon-sdk server --data-dir ./test-chain-1 --chain genesis.json --grpc :10000 --libp2p :10001 --jsonrpc :10002 --seal &
-    ../bin/polygon-sdk server --data-dir ./test-chain-2 --chain genesis.json --grpc :20000 --libp2p :20001 --jsonrpc :20002 --seal &
-    ../bin/polygon-sdk server --data-dir ./test-chain-3 --chain genesis.json --grpc :30000 --libp2p :30001 --jsonrpc :30002 --seal &
-    ../bin/polygon-sdk server --data-dir ./test-chain-4 --chain genesis.json --grpc :40000 --libp2p :40001 --jsonrpc :40002 --seal &
-    ../bin/polygon-sdk server --chain genesis.json --dev --log-level debug
+   eval $command_run
 fi
 
