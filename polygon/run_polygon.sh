@@ -26,7 +26,7 @@ then
 
     for (( c=1; c<=$NUM_NODES; c++ ))
     do
-       ../bin/polygon-sdk secrets init --data-dir node-$c >> ./tmp/out$c
+       ../bin/polygon-edge secrets init --data-dir node-$c >> ./tmp/out$c
     done
     
     for (( c=1; c<=$NUM_NODES; c++ ))
@@ -40,7 +40,7 @@ then
         node_ids[$c]=${NODE_ID// /}
     done
     
-    ../bin/polygon-sdk genesis --consensus ibft --ibft-validators-prefix-path node- --bootnode "/ip4/127.0.0.1/tcp/11001/p2p/${node_ids[1]}" --bootnode "/ip4/127.0.0.1/tcp/12001/p2p/${node_ids[2]}" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000  --block-gas-limit 16234336 &> /dev/null
+    ../bin/polygon-edge genesis --consensus ibft --ibft-validators-prefix-path node- --bootnode "/ip4/127.0.0.1/tcp/11001/p2p/${node_ids[1]}" --bootnode "/ip4/127.0.0.1/tcp/12001/p2p/${node_ids[2]}" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000  --block-gas-limit 16234336 &> /dev/null
     
 
     #output file private_key
@@ -86,10 +86,10 @@ fi
     for (( c=1; c<=$NUM_NODES; c++ ))
         do
             tmp=$((c+10))
-            command_run="${command_run} ../bin/polygon-sdk server --data-dir ./node-${c} --chain genesis.json --grpc :${tmp}000 --libp2p :${tmp}001 --jsonrpc :${tmp}002 --seal &"
+            command_run="${command_run} ../bin/polygon-edge server --data-dir ./node-${c} --chain genesis.json --grpc :${tmp}000 --libp2p :${tmp}001 --jsonrpc :${tmp}002 --seal &"
             if (($c==$NUM_NODES))
             then
-            command_run="${command_run} ../bin/polygon-sdk server --chain genesis.json --dev --log-level debug"
+            command_run="${command_run} ../bin/polygon-edge server --chain genesis.json --dev --log-level debug"
             fi
         done
    
@@ -100,4 +100,3 @@ if [ $VAR = "yes" ]
 then
    eval $command_run
 fi
-
