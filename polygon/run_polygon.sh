@@ -10,13 +10,25 @@ declare -i NUM_NODES=5
 
 if [ $VAR = "yes" ]
 then
-    echo -n -e "How many validators you want? (4, 8, 12)\n"
+    echo -n -e "\nHow many validators you want? (4, 8, 12)\n"
     read num
     if (($num!=4))| (($num != 8))| (($num != 12))
     then
         num=4
     fi
     NUM_NODES=$num
+     echo -n -e "\nWhich consensus mechanism do you want to use? (1-IBFT, 2-PoS)\n"
+    read mechanism
+    if (($mechanism==1))
+    then
+        mechanism='ibft'
+    elif (($mechanism==2))
+        then
+        mechanism='pos'
+    else
+        mechanism='ibft'
+    fi
+    echo $mechanism
     rm -rf src
     mkdir src
     rm -rf polygon-network
@@ -40,7 +52,7 @@ then
         node_ids[$c]=${NODE_ID// /}
     done
     
-    ../bin/polygon-edge genesis --consensus ibft --ibft-validators-prefix-path node- --bootnode "/ip4/127.0.0.1/tcp/11001/p2p/${node_ids[1]}" --bootnode "/ip4/127.0.0.1/tcp/12001/p2p/${node_ids[2]}" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000  --block-gas-limit 16234336 &> /dev/null
+    ../bin/polygon-edge genesis --consensus ${mechanism} --ibft-validators-prefix-path node- --bootnode "/ip4/127.0.0.1/tcp/11001/p2p/${node_ids[1]}" --bootnode "/ip4/127.0.0.1/tcp/12001/p2p/${node_ids[2]}" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000  --block-gas-limit 16234336 &> /dev/null
     
 
     #output file private_key
