@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from contract_functions import ContractTest
-from settings import MIN_THREAD, MAX_THREAD
+from settings import MIN_THREAD, MAX_THREAD, DEBUG
 
 
 def range_limited_thread(arg: str) -> int:
@@ -58,7 +58,8 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
             function_status_ok = await eval(func_to_run)
             end_fun = datetime.now()
     except ValueError as v:
-        print(f'ValueError #{process_count}: {v}')
+        if DEBUG:
+            print(f'ValueError #{process_count}: {v}')
         cloud_status_ok = False
         function_status_ok = False
         end_cloud = datetime.now()
@@ -91,14 +92,14 @@ async def main():
     # Start the threads
     for j in jobs:
         j.start()
-        rand = np.random.exponential(0.5)
+        rand = np.random.exponential(args.lambda_p)
         await asyncio.sleep(rand)
 
     # Ensure all the threads have finished
     for j in jobs:
         j.join()
 
-    print(df[['start_cloud', 'end_cloud', 'time_cloud', 'start_fun', 'end_fun', 'time_fun', 'status']])
+    print(df[['id', 'start_cloud', 'end_cloud', 'time_cloud', 'start_fun', 'end_fun', 'time_fun']])
     print(f"Rows with status True: {len(df.loc[df['status']])}")
 
 
@@ -133,7 +134,7 @@ if __name__ == '__main__':
         help='the number of async threads to run'
     )
     parser.add_argument(
-        '-l', '--lambda', default=.5,
+        '-l', '--lambda_p', default=.5,
         type=float, choices=[2, 1, .5, .2, .1],
         help='the lambda parameter for interarrival time Poisson'
     )

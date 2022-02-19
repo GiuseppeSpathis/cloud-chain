@@ -59,7 +59,8 @@ class ContractTest:
 
             return tx_receipt['status']
         except ValueError as v:
-            print(f'ValueError [sign_send]: {v}')
+            if DEBUG:
+                print(f'ValueError [sign_send]: {v}')
             return 0
 
     async def cloud_sla_creation_activation(self) -> tuple:
