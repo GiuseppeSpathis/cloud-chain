@@ -49,35 +49,38 @@ then
     
     echo -n -e "\nWhich consensus mechanism do you want to use? (1-IBFT, 2-PoS)\n"
     read mechanism
-
+    
     if (($mechanism==1))
     then
         mechanism='--consensus ibft'
-    elif (($mechanism==2))
-    then
-        mechanism='--pos'
-        if [ -d "./staking-contracts/" ]
+        elif (($mechanism==2))
         then
-            
-            #git clone https://github.com/0xPolygon/staking-contracts.git &> /dev/null
+        mechanism='--pos'
+        if [ ! -d "./staking-contracts/" ] 
+        then
+            rm -rf staking-contracts
+            echo -e \n\nDownloading resource files...\n\n
+            git clone https://github.com/0xPolygon/staking-contracts.git
             cd staking-contracts
-            echo Installing node modules...
-            #npm i &> /dev/null
+            echo -e \n\nInstalling node modules...\n\n
+            npm i
             echo building contract...
             npm run build &> /dev/null
-            private_keys=''
-            for (( c=1; c<=$NUM_NODES; c++ ))
-            do
-                private_keys="${private_keys} 0x$(cat '../polygon-network/node-'$c'/consensus/validator.key')"
-                
-                if (($c!=$NUM_NODES))
-                then
-                    private_keys="${private_keys} ,"
-                fi
-            done
-            echo -e "JSONRPC_URL=http://127.0.0.1:8545\nPRIVATE_KEYS=${private_keys}\nSTAKING_CONTRACT_ADDRESS=0x0000000000000000000000000000000000001001">.env
-            cd ..
+        else
+            cd staking-contracts
         fi
+        private_keys=''
+        for (( c=1; c<=$NUM_NODES; c++ ))
+        do
+            private_keys="${private_keys} 0x$(cat '../polygon-network/node-'$c'/consensus/validator.key')"
+            
+            if (($c!=$NUM_NODES))
+            then
+                private_keys="${private_keys} ,"
+            fi
+        done
+        echo -e "JSONRPC_URL=http://127.0.0.1:8545\nPRIVATE_KEYS=${private_keys}\nSTAKING_CONTRACT_ADDRESS=0x0000000000000000000000000000000000001001">.env
+        cd ..
     else
         mechanism='--consensus ibft'
     fi
@@ -86,10 +89,8 @@ then
     if [[ $mechanism == "--pos" ]]
     then
         epoch="--epoch-size 50"
-        deploy_pos="& cd ../staking-contracts ; npm run deploy --silent ;npm run stack --silent; echo finish stacking-------------------------------"
     else
         epoch=''
-        deploy_pos=""
     fi
     ../bin/polygon-edge genesis --consensus ibft ${mechanism} ${epoch} --ibft-validators-prefix-path node- --bootnode "/ip4/127.0.0.1/tcp/11001/p2p/${node_ids[1]}" --bootnode "/ip4/127.0.0.1/tcp/12001/p2p/${node_ids[2]}" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000  --block-gas-limit 16234336 &> /dev/null
     
@@ -149,5 +150,5 @@ echo -n -e "Do you want run the newtork (yes/no)\n"
 read VAR
 if [ $VAR = "yes" ]
 then
-    eval $command_run
+    ../deploy_pos_contract.sh & cd ../polygon-network ; eval $command_run
 fi
