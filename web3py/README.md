@@ -35,3 +35,5 @@
 
  - With low interarrival time the blockchain doesn't accept the nonce specified in the transactions, and it fails
  - Re-run `cloud_sla_creation_activation()` to obtain new address instead of use the old one
+ - Modify price for the `contract_cloud_sla.functions.Deposit()`, it is too high
+ - Aggregate specific functions for a single run
