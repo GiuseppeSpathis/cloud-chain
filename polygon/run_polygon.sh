@@ -150,5 +150,11 @@ echo -n -e "Do you want run the newtork (yes/no)\n"
 read VAR
 if [ $VAR = "yes" ]
 then
-    ../deploy_pos_contract.sh & cd ../polygon-network ; eval $command_run
+    if [[ $mechanism == "--pos" ]]
+    then
+        ../deploy_pos_contract.sh & cd ../polygon-network ; eval $command_run
+    else
+         eval $command_run
+    fi
+    
 fi
