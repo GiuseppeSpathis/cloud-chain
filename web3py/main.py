@@ -1,6 +1,7 @@
 import asyncio
 
 import argparse
+import os
 import threading
 from datetime import datetime
 
@@ -8,9 +9,10 @@ import numpy as np
 import pandas as pd
 
 from contract_functions import ContractTest
-from settings import DEBUG
+from settings import DEBUG, MIN_TIME, MAX_TIME, RESULTS_CSV_DIR
 
-'''def range_limited_thread(arg: str) -> int:
+
+def range_limited_thread(arg: str) -> int:
     """
     Type function for argparse - int within some predefined bounds.
     """
@@ -18,9 +20,9 @@ from settings import DEBUG
         s = int(arg)
     except ValueError:
         raise argparse.ArgumentTypeError("must be a int number")
-    if s < MIN_THREAD or s > MAX_THREAD:
-        raise argparse.ArgumentTypeError(f"argument must be < {str(MIN_THREAD)} and > {str(MAX_THREAD)}")
-    return s'''
+    if s < MIN_TIME or s > MAX_TIME:
+        raise argparse.ArgumentTypeError(f"argument must be < {str(MIN_TIME)} and > {str(MAX_TIME)}")
+    return s
 
 
 def between_callback(process_count: int, fn: str):
@@ -36,8 +38,8 @@ def between_callback(process_count: int, fn: str):
 
 async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
     # Flag statuses
-    cloud_status_ok = True
-    function_status_ok = True
+    cloud_status_ok = False
+    function_status_ok = False
     # Values to store
     cloud_address = 'NaN'
     start_cloud, end_cloud = datetime.now(), datetime.now()
@@ -48,6 +50,7 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
             start_cloud, start_fun = datetime.now(), datetime.now()
             cloud_address, cloud_status_ok = await eval(func_to_run)
             end_cloud, end_fun = datetime.now(), datetime.now()
+            func_to_run = cloud_status_ok
         else:
             start_cloud = datetime.now()
             cloud_address, cloud_status_ok = await obj.cloud_sla_creation_activation()
@@ -81,12 +84,12 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
 
 
 async def main():
-    max_time = args.time
     start_simulation = datetime.now()
     sim_time = (start_simulation - zero_time).total_seconds()
+
     idx = 0
     jobs = []
-    while sim_time < max_time:
+    while sim_time < args.time:
         thread = threading.Thread(target=between_callback, args=[idx, 'obj.' + args.function])
         jobs.append(thread)
         jobs[idx].start()
@@ -96,16 +99,24 @@ async def main():
         sim_time = (datetime.now() - zero_time).total_seconds()
 
     # wait for the last thread to be completed
-    jobs[idx - 1].join()
 
-    print(df[['id', 'start_cloud', 'end_cloud', 'time_cloud', 'start_fun', 'end_fun', 'time_fun']])
+    print(df[['start_cloud', 'end_cloud', 'time_cloud', 'start_fun', 'end_fun', 'time_fun', 'status']])
     print(f"Rows with status True: {len(df.loc[df['status']])}")
+
+    if args.save:
+        path = os.getcwd()
+        out_dir = os.path.join(path, RESULTS_CSV_DIR)
+        if not os.path.exists(out_dir):
+            os.mkdir(out_dir)
+        out_file = f'{args.function}_{args.lambda_p}_{args.time}_{args.blockchain}.csv'
+        results_path = os.path.join(out_dir, out_file)
+        df.to_csv(results_path, index=False, encoding='utf-8')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Script written using web3py to test different blockchains.',
-        usage='%(prog)s blockchain function [-t TIME] [-l LAMBDA]'
+        usage='%(prog)s blockchain function [-t TIME] [-l LAMBDA] [-s]'
     )
     parser.add_argument(
         'blockchain', default='none', type=str,
@@ -129,13 +140,18 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '-t', '--time', default=10,
-        type=int,
+        type=range_limited_thread,
         help='the number of seconds to run the simulation for each function'
     )
     parser.add_argument(
         '-l', '--lambda_p', default=.5,
         type=float, choices=[2, 1, .5, .2, .1],
         help='the lambda parameter for interarrival time Poisson'
+    )
+    parser.add_argument(
+        '-s', '--save', default=False,
+        action='store_true',
+        help='save function_lambda_time_blockchain.csv file as output'
     )
 
     args = parser.parse_args()

@@ -2,11 +2,15 @@ import asyncio
 import threading
 
 from eth_typing import Address
-from web3 import Web3, AsyncHTTPProvider, HTTPProvider
+from web3 import Web3, AsyncHTTPProvider, HTTPProvider, WebsocketProvider
 from web3.eth import AsyncEth
 from web3.middleware import geth_poa_middleware
 
-from settings import HTTP_URI, COMPILED_FACTORY_PATH, COMPILED_ORACLE_PATH, COMPILED_CLOUD_SLA_PATH, DEBUG
+from settings import (
+    HTTP_URI, WEB_SOCKET_URI,
+    COMPILED_FACTORY_PATH, COMPILED_ORACLE_PATH,
+    COMPILED_CLOUD_SLA_PATH, DEBUG
+)
 from utility import get_addresses, get_settings, get_contract, check_statuses
 
 
@@ -23,7 +27,10 @@ class ContractTest:
             middlewares=[]  # geth_poa_middleware not supported yet
         )
 
-        self.w3 = Web3(HTTPProvider(HTTP_URI))
+        if blockchain == 'polygon':
+            self.w3 = Web3(HTTPProvider(HTTP_URI))
+        else:
+            self.w3 = Web3(WebsocketProvider(WEB_SOCKET_URI))
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
         self.lock = threading.Lock()
@@ -55,6 +62,7 @@ class ContractTest:
         try:
             signed_tx = self.w3.eth.account.sign_transaction(tx, private_key=pk)
             tx_hash = await self.w3_async.eth.send_raw_transaction(signed_tx.rawTransaction)
+            # more parameters: timeout, poll_latency
             tx_receipt = await self.w3_async.eth.wait_for_transaction_receipt(tx_hash)
 
             return tx_receipt['status']
@@ -89,6 +97,8 @@ class ContractTest:
         })
         statuses.append(await self.sign_send_transaction(tx_create_child, self.private_keys[0]))
 
+        # tx_sm_address = await self.w3_async.eth.call(contract_factory.functions.getSmartContractAddress(
+        # self.accounts[1]))
         tx_sm_address = contract_factory.functions.getSmartContractAddress(
             self.accounts[1]
         ).call()
