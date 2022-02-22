@@ -8,10 +8,9 @@ import numpy as np
 import pandas as pd
 
 from contract_functions import ContractTest
-from settings import MIN_THREAD, MAX_THREAD, DEBUG
+from settings import DEBUG
 
-
-def range_limited_thread(arg: str) -> int:
+'''def range_limited_thread(arg: str) -> int:
     """
     Type function for argparse - int within some predefined bounds.
     """
@@ -21,7 +20,7 @@ def range_limited_thread(arg: str) -> int:
         raise argparse.ArgumentTypeError("must be a int number")
     if s < MIN_THREAD or s > MAX_THREAD:
         raise argparse.ArgumentTypeError(f"argument must be < {str(MIN_THREAD)} and > {str(MAX_THREAD)}")
-    return s
+    return s'''
 
 
 def between_callback(process_count: int, fn: str):
@@ -82,22 +81,22 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
 
 
 async def main():
-    threads = args.threads  # Number of threads to create
+    max_time = args.time
+    start_simulation = datetime.now()
+    sim_time = (start_simulation - zero_time).total_seconds()
+    idx = 0
     jobs = []
-
-    for idx in range(threads):
+    while sim_time < max_time:
         thread = threading.Thread(target=between_callback, args=[idx, 'obj.' + args.function])
         jobs.append(thread)
-
-    # Start the threads
-    for j in jobs:
-        j.start()
-        rand = np.random.exponential(args.lambda_p)
+        jobs[idx].start()
+        idx += 1
+        rand = np.random.exponential(1 / args.lambda_p)
         await asyncio.sleep(rand)
+        sim_time = (datetime.now() - zero_time).total_seconds()
 
-    # Ensure all the threads have finished
-    for j in jobs:
-        j.join()
+    # wait for the last thread to be completed
+    jobs[idx - 1].join()
 
     print(df[['id', 'start_cloud', 'end_cloud', 'time_cloud', 'start_fun', 'end_fun', 'time_fun']])
     print(f"Rows with status True: {len(df.loc[df['status']])}")
@@ -106,7 +105,7 @@ async def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Script written using web3py to test different blockchains.',
-        usage='%(prog)s blockchain function [-t THREADS] [-l LAMBDA]'
+        usage='%(prog)s blockchain function [-t TIME] [-l LAMBDA]'
     )
     parser.add_argument(
         'blockchain', default='none', type=str,
@@ -129,9 +128,9 @@ if __name__ == '__main__':
         help='the name of the function to stress'
     )
     parser.add_argument(
-        '-t', '--threads', default=10,
-        type=range_limited_thread,
-        help='the number of async threads to run'
+        '-t', '--time', default=10,
+        type=int,
+        help='the number of seconds to run the simulation for each function'
     )
     parser.add_argument(
         '-l', '--lambda_p', default=.5,
