@@ -8,6 +8,7 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
+from web3client import Web3Client
 from contract_functions import ContractTest
 from settings import DEBUG, RESULTS_CSV_DIR
 from utility import range_limited_thread
@@ -41,7 +42,7 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
             function_status_ok = cloud_status_ok
         else:
             start_cloud = datetime.now()
-            cloud_address, cloud_status_ok = await obj.cloud_sla_creation_activation()
+            cloud_address, cloud_status_ok = await eval(f"{func_to_run.split('.')[0]}.cloud_sla_creation_activation()")
             end_cloud = datetime.now()
             func_to_run = func_to_run.replace(')', f"'{cloud_address}')")
             start_fun = datetime.now()
@@ -86,7 +87,7 @@ async def new_get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
     else:
         start_cloud = datetime.now()
         try:
-            cloud_address, cloud_status_ok = await obj.cloud_sla_creation_activation()
+            cloud_address, cloud_status_ok = await eval(f"{func_to_run.split('.')[0]}.cloud_sla_creation_activation()")
         except ValueError as v:
             if DEBUG:
                 print(f'ValueError_cloud #{process_count}: {v}')
@@ -122,7 +123,7 @@ async def main():
     jobs = []
 
     for idx in range(args.threads):
-        thread = threading.Thread(target=between_callback, args=[idx, 'obj.' + args.function])
+        thread = threading.Thread(target=between_callback, args=[idx, f'contracts[{idx}].{args.function}'])
         jobs.append(thread)
 
     # Start the threads
@@ -137,7 +138,7 @@ async def main():
 
     if DEBUG:
         print(df[['id', 'start_cloud', 'end_cloud', 'time_cloud', 'start_fun', 'end_fun', 'time_fun']])
-        print(f"Status column:\n{df['status']}")
+        print(f"Status column:\n{df[['id', 'status']]}")
         print(f"Rows with status True: {len(df.loc[df['status']])}")
 
     if args.save:
@@ -195,6 +196,26 @@ if __name__ == '__main__':
 
     zero_time = datetime.now()
     df = pd.DataFrame()
-    obj = ContractTest(args.blockchain)
+    client = Web3Client(args.blockchain)
+    summary = client.get_contract_address()
 
+    '''
+    for idx, elm in enumerate(summary):
+        print(f'[{idx}]:\n {json.dumps(elm, indent=4, sort_keys=True)}')
+    '''
+
+    contracts = []
+    for i in range(args.threads):
+        circle = i % 4  # TODO: not manually
+        contracts.append(
+            ContractTest(
+                client.get_w3(),
+                client.get_w3_async(),
+                client.pks_to_addresses(summary[circle]['private_keys']),
+                summary[circle]['private_keys'],
+                summary[circle]['contracts']
+            )
+        )
+
+    print('Start simulation...')
     exit(asyncio.run(main()))

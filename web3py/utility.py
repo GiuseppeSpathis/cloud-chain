@@ -19,7 +19,7 @@ def get_addresses(blockchain: str) -> tuple:
     return QUORUM_FACTORY_ADDRESS, QUORUM_ORACLE_ADDRESS
 
 
-def get_settings(blockchain: str) -> tuple:
+def get_credentials(blockchain: str) -> tuple:
     if blockchain == 'polygon':
         from settings import (
             polygon_accounts, polygon_private_keys
