@@ -9,20 +9,8 @@ import numpy as np
 import pandas as pd
 
 from contract_functions import ContractTest
-from settings import DEBUG, MIN_TIME, MAX_TIME, RESULTS_CSV_DIR
-
-
-def range_limited_thread(arg: str) -> int:
-    """
-    Type function for argparse - int within some predefined bounds.
-    """
-    try:
-        s = int(arg)
-    except ValueError:
-        raise argparse.ArgumentTypeError("must be a int number")
-    if s < MIN_TIME or s > MAX_TIME:
-        raise argparse.ArgumentTypeError(f"argument must be < {str(MIN_TIME)} and > {str(MAX_TIME)}")
-    return s
+from settings import DEBUG, RESULTS_CSV_DIR
+from utility import range_limited_thread
 
 
 def between_callback(process_count: int, fn: str):
@@ -50,7 +38,7 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
             start_cloud, start_fun = datetime.now(), datetime.now()
             cloud_address, cloud_status_ok = await eval(func_to_run)
             end_cloud, end_fun = datetime.now(), datetime.now()
-            func_to_run = cloud_status_ok
+            function_status_ok = cloud_status_ok
         else:
             start_cloud = datetime.now()
             cloud_address, cloud_status_ok = await obj.cloud_sla_creation_activation()
@@ -83,32 +71,81 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
         })
 
 
-async def main():
-    start_simulation = datetime.now()
-    sim_time = (start_simulation - zero_time).total_seconds()
+async def new_get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
+    """
+    Version with try-except closes to function call statement.
+    """
+    # Values to store
+    cloud_address = 'NaN'
 
-    idx = 0
+    if 'cloud_sla_creation_activation' in func_to_run:
+        start_cloud, start_fun = datetime.now(), datetime.now()
+        cloud_address, cloud_status_ok = await eval(func_to_run)
+        end_cloud, end_fun = datetime.now(), datetime.now()
+        function_status_ok = cloud_status_ok
+    else:
+        start_cloud = datetime.now()
+        try:
+            cloud_address, cloud_status_ok = await obj.cloud_sla_creation_activation()
+        except ValueError as v:
+            if DEBUG:
+                print(f'ValueError_cloud #{process_count}: {v}')
+            cloud_status_ok = False
+        end_cloud = datetime.now()
+        func_to_run = func_to_run.replace(')', f"'{cloud_address}')")
+        start_fun = datetime.now()
+        try:
+            function_status_ok = await eval(func_to_run)
+        except ValueError as v:
+            if DEBUG:
+                print(f'ValueError_fun #{process_count}: {v}')
+            function_status_ok = False
+        end_fun = datetime.now()
+
+    duration_cloud = end_cloud - start_cloud
+    duration_fun = end_fun - start_fun
+
+    return pd.DataFrame({
+        'id': [process_count],
+        'start_cloud': [(start_cloud - zero_time).total_seconds()],
+        'end_cloud': [(end_cloud - zero_time).total_seconds()],
+        'time_cloud': [duration_cloud.total_seconds()],
+        'start_fun': [(start_fun - zero_time).total_seconds()],
+        'end_fun': [(end_fun - zero_time).total_seconds()],
+        'time_fun': [duration_fun.total_seconds()],
+        'address': [cloud_address],
+        'status': cloud_status_ok and function_status_ok,
+    })
+
+
+async def main():
     jobs = []
-    while sim_time < args.time:
+
+    for idx in range(args.threads):
         thread = threading.Thread(target=between_callback, args=[idx, 'obj.' + args.function])
         jobs.append(thread)
-        jobs[idx].start()
-        idx += 1
+
+    # Start the threads
+    for j in jobs:
+        j.start()
         rand = np.random.exponential(1 / args.lambda_p)
         await asyncio.sleep(rand)
-        sim_time = (datetime.now() - zero_time).total_seconds()
 
-    # wait for the last thread to be completed
+    # Ensure all the threads have finished
+    for j in jobs:
+        j.join()
 
-    print(df[['start_cloud', 'end_cloud', 'time_cloud', 'start_fun', 'end_fun', 'time_fun', 'status']])
-    print(f"Rows with status True: {len(df.loc[df['status']])}")
+    if DEBUG:
+        print(df[['id', 'start_cloud', 'end_cloud', 'time_cloud', 'start_fun', 'end_fun', 'time_fun']])
+        print(f"Status column:\n{df['status']}")
+        print(f"Rows with status True: {len(df.loc[df['status']])}")
 
     if args.save:
         path = os.getcwd()
         out_dir = os.path.join(path, RESULTS_CSV_DIR)
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
-        out_file = f'{args.function}_{args.lambda_p}_{args.time}_{args.blockchain}.csv'
+        out_file = f'async_thread_{args.function}_{args.lambda_p}_{args.threads}_{args.blockchain}.csv'
         results_path = os.path.join(out_dir, out_file)
         df.to_csv(results_path, index=False, encoding='utf-8')
 
@@ -139,9 +176,9 @@ if __name__ == '__main__':
         help='the name of the function to stress'
     )
     parser.add_argument(
-        '-t', '--time', default=10,
+        '-t', '--threads', default=10,
         type=range_limited_thread,
-        help='the number of seconds to run the simulation for each function'
+        help='the number of async threads to run'
     )
     parser.add_argument(
         '-l', '--lambda_p', default=.5,
@@ -151,7 +188,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-s', '--save', default=False,
         action='store_true',
-        help='save function_lambda_time_blockchain.csv file as output'
+        help='save csv file as output'
     )
 
     args = parser.parse_args()

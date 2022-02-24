@@ -1,7 +1,10 @@
 import json
+from argparse import ArgumentTypeError
 
 from eth_typing import Address
 from web3.contract import Contract
+
+from settings import MIN_THREAD, MAX_THREAD
 
 
 def get_addresses(blockchain: str) -> tuple:
@@ -46,3 +49,16 @@ def check_statuses(statuses: []) -> bool:
         if statuses[idx] == 0:
             return False
     return True
+
+
+def range_limited_thread(arg: str) -> int:
+    """
+    Type function for argparse - int within some predefined bounds.
+    """
+    try:
+        s = int(arg)
+    except ValueError:
+        raise ArgumentTypeError("must be a int number")
+    if s < MIN_THREAD or s > MAX_THREAD:
+        raise ArgumentTypeError(f"argument must be < {str(MIN_THREAD)} and > {str(MAX_THREAD)}")
+    return s

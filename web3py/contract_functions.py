@@ -4,6 +4,7 @@ import threading
 from eth_typing import Address
 from web3 import Web3, AsyncHTTPProvider, HTTPProvider, WebsocketProvider
 from web3.eth import AsyncEth
+from web3.exceptions import TimeExhausted
 from web3.middleware import geth_poa_middleware
 
 from settings import (
@@ -39,9 +40,7 @@ class ContractTest:
             self.nonces.append(self.w3.eth.get_transaction_count(self.accounts[idx]))
 
     async def get_nonce(self, idx: int):
-        # self.lock.acquire()
         nonce = await self.w3_async.eth.get_transaction_count(self.accounts[idx])
-        # self.lock.release()
         return nonce
 
     async def get_nonce_lock(self, idx: int):
@@ -62,14 +61,13 @@ class ContractTest:
         try:
             signed_tx = self.w3.eth.account.sign_transaction(tx, private_key=pk)
             tx_hash = await self.w3_async.eth.send_raw_transaction(signed_tx.rawTransaction)
-            # more parameters: timeout, poll_latency
             tx_receipt = await self.w3_async.eth.wait_for_transaction_receipt(tx_hash)
-
-            return tx_receipt['status']
-        except ValueError as v:
+        except (ValueError, TimeExhausted) as e:
             if DEBUG:
-                print(f'ValueError [sign_send]: {v}')
+                print(f"{type(e)} [sign_send]: {e}")
             return 0
+        else:
+            return tx_receipt['status']
 
     async def cloud_sla_creation_activation(self) -> tuple:
         statuses = []

@@ -1,21 +1,45 @@
+import json
+import os
+
 from web3.auto import w3
-from solcx import install_solc, compile_files
+from solcx import compile_files, set_solc_version, install_solc
 
 from settings import polygon_accounts, polygon_private_keys
 
-install_solc(version='latest')
-
 
 def deploy_contract(filename: str, address: int = 0):
+    old_cwd = os.getcwd()
+    filename_no_ext = filename.split('.')[0]
+    key = f'{filename}:{filename_no_ext}'
+
+    install_solc('0.8.9')
+    set_solc_version('0.8.9')
+
+    os.chdir('../contracts')
     compiled_sol = compile_files(
-        f'../contracts/{filename}',
+        filename,
         output_values=['abi', 'bin']
     )
 
-    contract_id, contract_interface = compiled_sol.popitem()
+    os.chdir('../build/contracts')
+    with open(f"{filename_no_ext}.json", 'w') as file:
+        json.dump(compiled_sol[key], file, indent=4)  # [key]
 
-    bytecode = contract_interface['bin']
-    abi = contract_interface['abi']
+    if 'Factory' in filename:
+        with open("CloudSLA.json", 'w') as file:
+            json.dump(compiled_sol["CloudSLA.sol:CloudSLA"], file, indent=4)
+
+    os.chdir(old_cwd)
+
+    bytecode = compiled_sol[key]['bin']
+    abi = compiled_sol[key]['abi']
+
+    '''
+    bytecode = compiled_sol['contracts'][filename][filename_no_ext]['evm']['bytecode']['object']
+    abi = json.loads(
+        compiled_sol['contracts'][filename][filename_no_ext]['metadata']
+    )['output']['abi']
+    '''
 
     w3.eth.default_account = polygon_accounts[address]
 
@@ -34,11 +58,10 @@ def deploy_contract(filename: str, address: int = 0):
         address=tx_receipt.contractAddress,
         abi=abi
     )
-    print(f"All {filename} functions: {contract.all_functions()}")
+    print(f'All {filename} functions: {contract.all_functions()}')
     print(f'\tAddress: {contract.address}')
 
 
 deploy_contract('Migrations.sol')
 deploy_contract('FileDigestOracle.sol', address=2)
 deploy_contract('Factory.sol')
-deploy_contract('CloudSLA.sol')
