@@ -92,8 +92,21 @@ then
     else
         epoch=''
     fi
-    ../bin/polygon-edge genesis --consensus ibft ${mechanism} ${epoch} --ibft-validators-prefix-path node- --bootnode "/ip4/127.0.0.1/tcp/11001/p2p/${node_ids[1]}" --bootnode "/ip4/127.0.0.1/tcp/12001/p2p/${node_ids[2]}" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000  --block-gas-limit 16234336 &> /dev/null
+    genesis="../bin/polygon-edge genesis --consensus ibft ${mechanism} ${epoch} --ibft-validators-prefix-path node- --bootnode '/ip4/127.0.0.1/tcp/11001/p2p/${node_ids[1]}' --bootnode '/ip4/127.0.0.1/tcp/12001/p2p/${node_ids[2]}'" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000  --block-gas-limit 16234336 &> /dev/null
     
+    
+    for (( c=1; c<=$NUM_NODES; c++ ))
+    do
+        
+        genesis="${genesis} --premine=${addresses[c]}:1000000000000000000000"
+        if (($c==$NUM_NODES))
+        then
+            genesis="${genesis} --block-gas-limit 16234336 &> /dev/null"
+        fi
+    done
+    eval $genesis
+
+
     
     #output file private_key
     private_keys='{"privatekey":['
