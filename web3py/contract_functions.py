@@ -1,75 +1,45 @@
-import asyncio
-import threading
-
 from eth_typing import Address
-from web3 import Web3, AsyncHTTPProvider, HTTPProvider, WebsocketProvider
-from web3.eth import AsyncEth
-from web3.middleware import geth_poa_middleware
+from web3 import Web3
+from web3.exceptions import TimeExhausted
 
 from settings import (
-    HTTP_URI, WEB_SOCKET_URI,
     COMPILED_FACTORY_PATH, COMPILED_ORACLE_PATH,
     COMPILED_CLOUD_SLA_PATH, DEBUG
 )
-from utility import get_addresses, get_settings, get_contract, check_statuses
+from utility import get_contract, check_statuses
 
 
 class ContractTest:
-    def __init__(self, blockchain):
-        self.factory_address, self.oracle_address = get_addresses(blockchain)
-        self.accounts, self.private_keys = get_settings(blockchain)
+    def __init__(
+            self,
+            w3: Web3,
+            w3_async: Web3,
+            accounts: [],
+            private_keys: [],
+            contract_addresses: {}
+    ):
+        self.w3 = w3
+        self.w3_async = w3_async
 
-        self.w3_async = Web3(
-            AsyncHTTPProvider(HTTP_URI),
-            modules={
-                'eth': AsyncEth
-            },
-            middlewares=[]  # geth_poa_middleware not supported yet
-        )
-
-        if blockchain == 'polygon':
-            self.w3 = Web3(HTTPProvider(HTTP_URI))
-        else:
-            self.w3 = Web3(WebsocketProvider(WEB_SOCKET_URI))
-        self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-
-        self.lock = threading.Lock()
-        self.nonces = []
-        for idx in range(3):
-            self.nonces.append(self.w3.eth.get_transaction_count(self.accounts[idx]))
+        self.oracle_address = contract_addresses['FileDigestOracle.sol']
+        self.factory_address = contract_addresses['Factory.sol']
+        self.accounts, self.private_keys = accounts, private_keys
 
     async def get_nonce(self, idx: int):
-        # self.lock.acquire()
         nonce = await self.w3_async.eth.get_transaction_count(self.accounts[idx])
-        # self.lock.release()
         return nonce
-
-    async def get_nonce_lock(self, idx: int):
-        self.lock.acquire()
-        await asyncio.sleep(.1)
-        tmp = self.nonces[idx]
-        self.nonces[idx] = self.nonces[idx] + 1
-        self.lock.release()
-        return tmp
-
-    async def update_nonces(self):
-        self.lock.acquire()
-        for i in range(3):
-            self.nonces[i] = await self.w3_async.eth.get_transaction_count(self.accounts[i])
-        self.lock.release()
 
     async def sign_send_transaction(self, tx: dict, pk: str) -> int:
         try:
             signed_tx = self.w3.eth.account.sign_transaction(tx, private_key=pk)
             tx_hash = await self.w3_async.eth.send_raw_transaction(signed_tx.rawTransaction)
-            # more parameters: timeout, poll_latency
             tx_receipt = await self.w3_async.eth.wait_for_transaction_receipt(tx_hash)
-
-            return tx_receipt['status']
-        except ValueError as v:
+        except (ValueError, TimeExhausted) as e:
             if DEBUG:
-                print(f'ValueError [sign_send]: {v}')
+                print(f"{type(e)} [sign_send]: {e}")
             return 0
+        else:
+            return tx_receipt['status']
 
     async def cloud_sla_creation_activation(self) -> tuple:
         statuses = []
