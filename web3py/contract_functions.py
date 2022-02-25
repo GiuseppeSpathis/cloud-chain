@@ -1,3 +1,5 @@
+import threading
+
 from eth_typing import Address
 from web3 import Web3
 from web3.exceptions import TimeExhausted
@@ -24,6 +26,12 @@ class ContractTest:
         self.oracle_address = contract_addresses['FileDigestOracle.sol']
         self.factory_address = contract_addresses['Factory.sol']
         self.accounts, self.private_keys = accounts, private_keys
+        self.index_upload = 0
+        self.lock = threading.Lock()
+        self.cloud_address = b'0x0'
+
+    def set_cloud_sla_address(self, address: Address):
+        self.cloud_address = address
 
     async def get_nonce(self, idx: int):
         nonce = await self.w3_async.eth.get_transaction_count(self.accounts[idx])
@@ -33,7 +41,7 @@ class ContractTest:
         try:
             signed_tx = self.w3.eth.account.sign_transaction(tx, private_key=pk)
             tx_hash = await self.w3_async.eth.send_raw_transaction(signed_tx.rawTransaction)
-            tx_receipt = await self.w3_async.eth.wait_for_transaction_receipt(tx_hash)
+            tx_receipt = await self.w3_async.eth.wait_for_transaction_receipt(tx_hash, timeout=20)
         except (ValueError, TimeExhausted) as e:
             if DEBUG:
                 print(f"{type(e)} [sign_send]: {e}")
@@ -97,7 +105,7 @@ class ContractTest:
         statuses = []
 
         # Contract
-        contract_cloud_sla = get_contract(self.w3, cloud_address, COMPILED_CLOUD_SLA_PATH)
+        contract_cloud_sla = get_contract(self.w3, self.cloud_address, COMPILED_CLOUD_SLA_PATH)
 
         # Transactions
         challenge = Web3.solidityKeccak(
@@ -209,7 +217,10 @@ class ContractTest:
 
     async def upload(self, cloud_address: Address) -> bool:
         # Parameters
-        filepath = 'test.pdf'
+        self.lock.acquire()
+        filepath = f'test{self.index_upload}.pdf'
+        self.index_upload += 1
+        self.lock.release()
         hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
         all_statuses = await self.sequence_upload(cloud_address, filepath, hash_digest)

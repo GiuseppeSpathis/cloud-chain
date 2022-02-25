@@ -27,7 +27,7 @@ def between_callback(process_count: int, fn: str):
 
 async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
     # Flag statuses
-    cloud_status_ok = False
+    cloud_status_ok = True
     function_status_ok = False
     # Values to store
     cloud_address = 'NaN'
@@ -42,7 +42,7 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
             function_status_ok = cloud_status_ok
         else:
             start_cloud = datetime.now()
-            cloud_address, cloud_status_ok = await eval(f"{func_to_run.split('.')[0]}.cloud_sla_creation_activation()")
+            # cloud_address, cloud_status_ok = await eval(f"{func_to_run.split('.')[0]}.cloud_sla_creation_activation()")
             end_cloud = datetime.now()
             func_to_run = func_to_run.replace(')', f"'{cloud_address}')")
             start_fun = datetime.now()
@@ -120,10 +120,14 @@ async def new_get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
 
 
 async def main():
+    for c in contracts:
+        cloud_address, _ = await c.cloud_sla_creation_activation()
+        c.set_cloud_sla_address(cloud_address)
+    print('ho finito l inizializzazione')
     jobs = []
 
     for idx in range(args.threads):
-        thread = threading.Thread(target=between_callback, args=[idx, f'contracts[{idx}].{args.function}'])
+        thread = threading.Thread(target=between_callback, args=[idx, f'contracts[{idx % 4}].{args.function}'])
         jobs.append(thread)
 
     # Start the threads
@@ -205,7 +209,7 @@ if __name__ == '__main__':
     '''
 
     contracts = []
-    for i in range(args.threads):
+    for i in range(4):
         circle = i % 4  # TODO: not manually
         contracts.append(
             ContractTest(
@@ -216,6 +220,7 @@ if __name__ == '__main__':
                 summary[circle]['contracts']
             )
         )
+    print(contracts)
 
     print('Start simulation...')
     exit(asyncio.run(main()))
