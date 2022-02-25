@@ -23,14 +23,19 @@ class ContractTest:
         self.w3 = w3
         self.w3_async = w3_async
 
+        # Contracts address
         self.oracle_address = contract_addresses['FileDigestOracle.sol']
         self.factory_address = contract_addresses['Factory.sol']
+        self.cloud_address = Address(b'0x0')
+
         self.accounts, self.private_keys = accounts, private_keys
-        self.index_upload = 0
+
+        self.filepaths = []
+        self.tx_upload_count = 0
         self.lock = threading.Lock()
-        self.cloud_address = b'0x0'
 
     def set_cloud_sla_address(self, address: Address):
+        # TODO: use @property for get/set
         self.cloud_address = address
 
     async def get_nonce(self, idx: int):
@@ -101,7 +106,7 @@ class ContractTest:
 
         return tx_sm_address, all_statuses
 
-    async def sequence_upload(self, cloud_address: Address, filepath: str, hash_digest: str) -> bool:
+    async def sequence_upload(self, filepath: str, hash_digest: str) -> bool:
         statuses = []
 
         # Contract
@@ -145,11 +150,11 @@ class ContractTest:
 
         return all_statuses
 
-    async def sequence_read(self, cloud_address: Address, filepath: str, url: str) -> bool:
+    async def sequence_read(self, filepath: str, url: str) -> bool:
         statuses = []
 
         # Contract
-        contract_cloud_sla = get_contract(self.w3, cloud_address, COMPILED_CLOUD_SLA_PATH)
+        contract_cloud_sla = get_contract(self.w3, self.cloud_address, COMPILED_CLOUD_SLA_PATH)
 
         # Transactions
         tx_read_request = contract_cloud_sla.functions.ReadRequest(
@@ -175,11 +180,11 @@ class ContractTest:
 
         return all_statuses
 
-    async def sequence_file(self, cloud_address: Address, filepath: str, url: str, hash_digest: str) -> bool:
+    async def sequence_file(self, filepath: str, url: str, hash_digest: str) -> bool:
         statuses = []
 
         # Contracts
-        contract_cloud_sla = get_contract(self.w3, cloud_address, COMPILED_CLOUD_SLA_PATH)
+        contract_cloud_sla = get_contract(self.w3, self.cloud_address, COMPILED_CLOUD_SLA_PATH)
         contract_oracle = get_contract(self.w3, self.oracle_address, COMPILED_ORACLE_PATH)
 
         # Transactions
@@ -215,41 +220,43 @@ class ContractTest:
 
         return all_statuses
 
-    async def upload(self, cloud_address: Address) -> bool:
+    async def upload(self) -> bool:
         # Parameters
         self.lock.acquire()
-        filepath = f'test{self.index_upload}.pdf'
-        self.index_upload += 1
+        filepath = f'test{self.tx_upload_count}.pdf'
+        self.tx_upload_count += 1
         self.lock.release()
         hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-        all_statuses = await self.sequence_upload(cloud_address, filepath, hash_digest)
+        all_statuses = await self.sequence_upload(filepath, hash_digest)
 
         if all_statuses and DEBUG:
             print('Upload: OK')
 
         return all_statuses
 
-    async def read(self, cloud_address: Address) -> bool:
+    async def read(self) -> bool:
         # Parameters
-        filepath = 'test.pdf'
-        url = 'www.test.com'
+        filepath = f'test{self.tx_upload_count - 1}.pdf'
+        url = f'www.{filepath}.com'
 
-        all_statuses = await self.sequence_read(cloud_address, filepath, url)
-
+        all_statuses = await self.sequence_read(filepath, url)
         if all_statuses and DEBUG:
             print('Read: OK')
 
         return all_statuses
 
-    async def delete(self, cloud_address: Address) -> bool:
+    async def delete(self) -> bool:
         statuses = []
 
         # Parameter
-        filepath = 'test.pdf'
+        self.lock.acquire()
+        self.tx_upload_count -= 1
+        filepath = f'test{self.tx_upload_count}.pdf'
+        self.lock.release()
 
         # Contract
-        contract_cloud_sla = get_contract(self.w3, cloud_address, COMPILED_CLOUD_SLA_PATH)
+        contract_cloud_sla = get_contract(self.w3, self.cloud_address, COMPILED_CLOUD_SLA_PATH)
 
         # Transactions
         tx_delete_request = contract_cloud_sla.functions.DeleteRequest(
@@ -277,39 +284,42 @@ class ContractTest:
 
         return all_statuses
 
-    async def file_check_undeleted_file(self, cloud_address: Address) -> bool:
+    async def file_check_undeleted_file(self) -> bool:
         # Parameters
-        filepath = 'test.pdf'
-        url = 'www.test.com'
+        filepath = f'test{self.tx_upload_count - 1}.pdf'
+        url = f'www.{filepath}.com'
         hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-        all_statuses = await self.sequence_file(cloud_address, filepath, url, hash_digest)
+        all_statuses = await self.sequence_file(filepath, url, hash_digest)
 
         if all_statuses and DEBUG:
             print('File check for undeleted file: OK')
 
         return all_statuses
 
-    async def another_file_upload(self, cloud_address: Address) -> bool:
+    async def another_file_upload(self) -> bool:
         # Parameters
-        filepath = 'test2.pdf'
+        self.lock.acquire()
+        filepath = f'test{self.tx_upload_count}.pdf'
+        self.tx_upload_count += 1
+        self.lock.release()
         hash_digest = '0x1f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-        all_statuses = await self.sequence_upload(cloud_address, filepath, hash_digest)
+        all_statuses = await self.sequence_upload(filepath, hash_digest)
 
         if all_statuses and DEBUG:
             print('Another file upload: OK')
 
         return all_statuses
 
-    async def read_deny_lost_file_check(self, cloud_address: Address) -> bool:
+    async def read_deny_lost_file_check(self) -> bool:
         statuses = []
 
         # Parameter
-        filepath = 'test2.pdf'
+        filepath = f'test{self.tx_upload_count - 1}.pdf'
 
         # Contract
-        contract_cloud_sla = get_contract(self.w3, cloud_address, COMPILED_CLOUD_SLA_PATH)
+        contract_cloud_sla = get_contract(self.w3, self.cloud_address, COMPILED_CLOUD_SLA_PATH)
 
         # Transactions
         tx_read_request = contract_cloud_sla.functions.ReadRequest(
@@ -337,27 +347,33 @@ class ContractTest:
 
         return all_statuses
 
-    async def another_file_upload_read(self, cloud_address: Address) -> bool:
+    async def another_file_upload_read(self) -> bool:
         # Parameters
-        filepath = 'test3.pdf'
-        url = 'www.test3.com'
+        self.lock.acquire()
+        filepath = f'test{self.tx_upload_count}.pdf'
+        self.tx_upload_count += 1
+        self.lock.release()
+        url = f'www.{filepath}.com'
         hash_digest = '0x2f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-        all_statuses_upload = await self.sequence_upload(cloud_address, filepath, hash_digest)
-        all_statuses_read = await self.sequence_read(cloud_address, filepath, url)
+        all_statuses_upload = await self.sequence_upload(filepath, hash_digest)
+        if not all_statuses_upload:
+            return all_statuses_upload
+
+        all_statuses_read = await self.sequence_read(filepath, url)
 
         if all_statuses_upload and all_statuses_read and DEBUG:
             print('Another file upload + read: OK')
 
         return all_statuses_upload and all_statuses_read
 
-    async def corrupted_file_check(self, cloud_address: Address) -> bool:
+    async def corrupted_file_check(self) -> bool:
         # Parameters
-        filepath = 'test3.pdf'
-        url = 'www.test3.com'
+        filepath = f'test{self.tx_upload_count - 1}.pdf'
+        url = f'www.{filepath}.com'
         hash_digest = '0x4f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
-        all_statuses = await self.sequence_file(cloud_address, filepath, url, hash_digest)
+        all_statuses = await self.sequence_file(filepath, url, hash_digest)
 
         if all_statuses and DEBUG:
             print('File Check for corrupted file: OK')

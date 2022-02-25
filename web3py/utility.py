@@ -4,19 +4,27 @@ from argparse import ArgumentTypeError
 from eth_typing import Address
 from web3.contract import Contract
 
-from settings import MIN_THREAD, MAX_THREAD
+from settings import MIN_THREAD, MAX_THREAD, DEPLOYED_CONTRACTS
 
 
-def get_addresses(blockchain: str) -> tuple:
-    if blockchain == 'polygon':
-        from settings import (
-            POLYGON_FACTORY_ADDRESS, POLYGON_ORACLE_ADDRESS
-        )
-        return POLYGON_FACTORY_ADDRESS, POLYGON_ORACLE_ADDRESS
-    from settings import (
-        QUORUM_FACTORY_ADDRESS, QUORUM_ORACLE_ADDRESS
-    )
-    return QUORUM_FACTORY_ADDRESS, QUORUM_ORACLE_ADDRESS
+async def init_simulation(contracts: [], threads, fn: str) -> bool:
+    statuses = []
+    for c in contracts:
+        # Use different cloud_addresses for each contract instance
+        cloud_address, cloud_status_ok = await c.cloud_sla_creation_activation()
+        c.set_cloud_sla_address(cloud_address)
+        statuses.append(cloud_status_ok)
+        if fn == 'read' or fn == 'read_deny_lost_file_check' or fn == 'file_check_undeleted_file':
+            statuses.append(await c.upload())
+        if fn == 'file_check_undeleted_file':
+            statuses.append(await c.read())
+        if fn == 'corrupted_file_check':
+            statuses.append(await c.another_file_upload_read())
+        if fn == 'delete':
+            for _ in range(round(threads / DEPLOYED_CONTRACTS) + 1):
+                statuses.append(await c.upload())
+
+    return check_statuses(statuses)
 
 
 def get_credentials(blockchain: str) -> tuple:

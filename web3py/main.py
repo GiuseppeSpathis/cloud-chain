@@ -10,8 +10,8 @@ import pandas as pd
 
 from web3client import Web3Client
 from contract_functions import ContractTest
-from settings import DEBUG, RESULTS_CSV_DIR
-from utility import range_limited_thread
+from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS
+from utility import range_limited_thread, init_simulation
 
 
 def between_callback(process_count: int, fn: str):
@@ -27,107 +27,50 @@ def between_callback(process_count: int, fn: str):
 
 async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
     # Flag statuses
-    cloud_status_ok = True
     function_status_ok = False
     # Values to store
     cloud_address = 'NaN'
-    start_cloud, end_cloud = datetime.now(), datetime.now()
     start_fun, end_fun = datetime.now(), datetime.now()
 
     try:
-        if 'cloud_sla_creation_activation' in func_to_run:
-            start_cloud, start_fun = datetime.now(), datetime.now()
-            cloud_address, cloud_status_ok = await eval(func_to_run)
-            end_cloud, end_fun = datetime.now(), datetime.now()
-            function_status_ok = cloud_status_ok
+        if 'cloud_sla_creation_activation' == func_to_run:
+            start_fun = datetime.now()
+            cloud_address, function_status_ok = await eval(func_to_run)
+            end_fun = datetime.now()
         else:
-            start_cloud = datetime.now()
-            # cloud_address, cloud_status_ok = await eval(f"{func_to_run.split('.')[0]}.cloud_sla_creation_activation()")
-            end_cloud = datetime.now()
-            func_to_run = func_to_run.replace(')', f"'{cloud_address}')")
             start_fun = datetime.now()
             function_status_ok = await eval(func_to_run)
             end_fun = datetime.now()
     except ValueError as v:
         if DEBUG:
             print(f'ValueError #{process_count}: {v}')
-        cloud_status_ok = False
         function_status_ok = False
-        end_cloud = datetime.now()
         end_fun = datetime.now()
     finally:
-        duration_cloud = end_cloud - start_cloud
         duration_fun = end_fun - start_fun
 
         return pd.DataFrame({
             'id': [process_count],
-            'start_cloud': [(start_cloud - zero_time).total_seconds()],
-            'end_cloud': [(end_cloud - zero_time).total_seconds()],
-            'time_cloud': [duration_cloud.total_seconds()],
             'start_fun': [(start_fun - zero_time).total_seconds()],
             'end_fun': [(end_fun - zero_time).total_seconds()],
             'time_fun': [duration_fun.total_seconds()],
             'address': [cloud_address],
-            'status': cloud_status_ok and function_status_ok,
+            'status': function_status_ok,
         })
 
 
-async def new_get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
-    """
-    Version with try-except closes to function call statement.
-    """
-    # Values to store
-    cloud_address = 'NaN'
-
-    if 'cloud_sla_creation_activation' in func_to_run:
-        start_cloud, start_fun = datetime.now(), datetime.now()
-        cloud_address, cloud_status_ok = await eval(func_to_run)
-        end_cloud, end_fun = datetime.now(), datetime.now()
-        function_status_ok = cloud_status_ok
-    else:
-        start_cloud = datetime.now()
-        try:
-            cloud_address, cloud_status_ok = await eval(f"{func_to_run.split('.')[0]}.cloud_sla_creation_activation()")
-        except ValueError as v:
-            if DEBUG:
-                print(f'ValueError_cloud #{process_count}: {v}')
-            cloud_status_ok = False
-        end_cloud = datetime.now()
-        func_to_run = func_to_run.replace(')', f"'{cloud_address}')")
-        start_fun = datetime.now()
-        try:
-            function_status_ok = await eval(func_to_run)
-        except ValueError as v:
-            if DEBUG:
-                print(f'ValueError_fun #{process_count}: {v}')
-            function_status_ok = False
-        end_fun = datetime.now()
-
-    duration_cloud = end_cloud - start_cloud
-    duration_fun = end_fun - start_fun
-
-    return pd.DataFrame({
-        'id': [process_count],
-        'start_cloud': [(start_cloud - zero_time).total_seconds()],
-        'end_cloud': [(end_cloud - zero_time).total_seconds()],
-        'time_cloud': [duration_cloud.total_seconds()],
-        'start_fun': [(start_fun - zero_time).total_seconds()],
-        'end_fun': [(end_fun - zero_time).total_seconds()],
-        'time_fun': [duration_fun.total_seconds()],
-        'address': [cloud_address],
-        'status': cloud_status_ok and function_status_ok,
-    })
-
-
 async def main():
-    for c in contracts:
-        cloud_address, _ = await c.cloud_sla_creation_activation()
-        c.set_cloud_sla_address(cloud_address)
-    print('ho finito l inizializzazione')
+    init = await init_simulation(contracts, args.threads, args.function)
+    if not init:
+        print('MSG INIT NON RIUSCITA')
+        exit(1)
+
+    print('MSG INIT RIUSCITA')
     jobs = []
 
     for idx in range(args.threads):
-        thread = threading.Thread(target=between_callback, args=[idx, f'contracts[{idx % 4}].{args.function}'])
+        circular = idx % DEPLOYED_CONTRACTS
+        thread = threading.Thread(target=between_callback, args=[idx, f'contracts[{circular}].{args.function}'])
         jobs.append(thread)
 
     # Start the threads
@@ -141,7 +84,7 @@ async def main():
         j.join()
 
     if DEBUG:
-        print(df[['id', 'start_cloud', 'end_cloud', 'time_cloud', 'start_fun', 'end_fun', 'time_fun']])
+        print(df)
         print(f"Status column:\n{df[['id', 'status']]}")
         print(f"Rows with status True: {len(df.loc[df['status']])}")
 
@@ -220,7 +163,6 @@ if __name__ == '__main__':
                 summary[circle]['contracts']
             )
         )
-    print(contracts)
 
     print('Start simulation...')
     exit(asyncio.run(main()))
