@@ -152,8 +152,8 @@ if __name__ == '__main__':
     '''
 
     contracts = []
-    for i in range(4):
-        circle = i % 4  # TODO: not manually
+    for i in range(DEPLOYED_CONTRACTS):
+        circle = i % DEPLOYED_CONTRACTS  # TODO: not manually
         contracts.append(
             ContractTest(
                 client.get_w3(),

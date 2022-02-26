@@ -5,7 +5,8 @@ declare -a addresses
 declare -a node_ids
 
 
-declare -i NUM_NODES=4
+declare -i NUM_VALIDATORS=4
+declare -i NUM_ACCOUNTS=15
 
 
 if [ $VAR = "yes" ]
@@ -20,7 +21,7 @@ then
     then
         num=4
     fi
-    NUM_NODES=$num
+    NUM_VALIDATORS=$num
     
     rm -rf src
     mkdir src
@@ -29,12 +30,12 @@ then
     mkdir polygon-network/tmp
     cd polygon-network
     
-    for (( c=1; c<=$NUM_NODES; c++ ))
+    for (( c=1; c<=$NUM_ACCOUNTS; c++ ))
     do
         ../bin/polygon-edge secrets init --data-dir node-$c >> ./tmp/out$c
     done
     
-    for (( c=1; c<=$NUM_NODES; c++ ))
+    for (( c=1; c<=$NUM_ACCOUNTS; c++ ))
     do
         INPUT=$(cat "./tmp/out$c")
         #Using as delimitator the = then focussing on the important data
@@ -70,11 +71,11 @@ then
             cd staking-contracts
         fi
         private_keys=''
-        for (( c=1; c<=$NUM_NODES; c++ ))
+        for (( c=1; c<=$NUM_VALIDATORS; c++ ))
         do
             private_keys="${private_keys} 0x$(cat '../polygon-network/node-'$c'/consensus/validator.key')"
             
-            if (($c!=$NUM_NODES))
+            if (($c!=$NUM_VALIDATORS))
             then
                 private_keys="${private_keys} ,"
             fi
@@ -92,14 +93,14 @@ then
     else
         epoch=''
     fi
-    genesis="../bin/polygon-edge genesis --consensus ibft ${mechanism} ${epoch} --ibft-validators-prefix-path node- --bootnode '/ip4/127.0.0.1/tcp/11001/p2p/${node_ids[1]}' --bootnode '/ip4/127.0.0.1/tcp/12001/p2p/${node_ids[2]}'" --premine=${addresses[1]}:1000000000000000000000 --premine=${addresses[2]}:1000000000000000000000 --premine=${addresses[3]}:1000000000000000000000 --premine=${addresses[4]}:1000000000000000000000  --block-gas-limit 16234336 &> /dev/null
+    genesis="../bin/polygon-edge genesis --consensus ibft ${mechanism} ${epoch} --ibft-validators-prefix-path node- --bootnode '/ip4/127.0.0.1/tcp/11001/p2p/${node_ids[1]}' --bootnode '/ip4/127.0.0.1/tcp/12001/p2p/${node_ids[2]}'"
     
     
-    for (( c=1; c<=$NUM_NODES; c++ ))
+    for (( c=1; c<=$NUM_ACCOUNTS; c++ ))
     do
         
         genesis="${genesis} --premine=${addresses[c]}:1000000000000000000000"
-        if (($c==$NUM_NODES))
+        if (($c==$NUM_ACCOUNTS))
         then
             genesis="${genesis} --block-gas-limit 16234336 &> /dev/null"
         fi
@@ -110,11 +111,11 @@ then
     
     #output file private_key
     private_keys='{"privatekey":['
-    for (( c=1; c<=$NUM_NODES; c++ ))
+    for (( c=1; c<=$NUM_ACCOUNTS; c++ ))
     do
         
         private_keys="${private_keys} \"0x$(cat './node-'$c'/consensus/validator.key')\""
-        if (($c!=$NUM_NODES))
+        if (($c!=$NUM_ACCOUNTS))
         then
             private_keys="${private_keys} ,"
         fi
@@ -126,10 +127,10 @@ then
     
     #output file address
     address='{"address":['
-    for (( c=1; c<=$NUM_NODES; c++ ))
+    for (( c=1; c<=$NUM_ACCOUNTS; c++ ))
     do
         address="${address} \"${addresses[$c]}\""
-        if (($c!=$NUM_NODES))
+        if (($c!=$NUM_ACCOUNTS))
         then
             address="${address} ,"
         fi
@@ -140,7 +141,7 @@ then
     echo -e "Network initialized correctly\n"
     
     
-    for (( c=1; c<=$NUM_NODES; c++ ))
+    for (( c=1; c<=$NUM_ACCOUNTS; c++ ))
     do
         rm -rf ./tmp/out$c
     done
@@ -148,11 +149,11 @@ else
     cd polygon-network
 fi
 
-for (( c=1; c<=$NUM_NODES; c++ ))
+for (( c=1; c<=$NUM_VALIDATORS; c++ ))
 do
     tmp=$((c+9))
     command_run="${command_run} ../bin/polygon-edge server --data-dir ./node-${c} --chain genesis.json --grpc :${tmp}000 --libp2p :${tmp}001 --jsonrpc :${tmp}002 --seal &"
-    if (($c==$NUM_NODES))
+    if (($c==$NUM_VALIDATORS))
     then
         command_run="${command_run} ../bin/polygon-edge server --chain genesis.json --dev --log-level debug "
     fi

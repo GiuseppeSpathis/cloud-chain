@@ -7,7 +7,7 @@ COMPILED_FACTORY_PATH = '../build/contracts/Factory.json'
 COMPILED_ORACLE_PATH = '../build/contracts/FileDigestOracle.json'
 COMPILED_CLOUD_SLA_PATH = '../build/contracts/CloudSLA.json'
 
-DEPLOYED_CONTRACTS = 4
+DEPLOYED_CONTRACTS = 5
 
 RESULTS_CSV_DIR = 'results'
 
