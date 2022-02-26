@@ -18,7 +18,6 @@ def between_callback(process_count: int, fn: str):
     global df
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-
     func_to_run = fn + '()'
     df_to_append = loop.run_until_complete(get_time(func_to_run, process_count))
     loop.close()
@@ -33,7 +32,7 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
     start_fun, end_fun = datetime.now(), datetime.now()
 
     try:
-        if 'cloud_sla_creation_activation' == func_to_run:
+        if 'cloud_sla_creation_activation' in func_to_run:
             start_fun = datetime.now()
             cloud_address, function_status_ok = await eval(func_to_run)
             end_fun = datetime.now()
@@ -55,7 +54,7 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
             'end_fun': [(end_fun - zero_time).total_seconds()],
             'time_fun': [duration_fun.total_seconds()],
             'address': [cloud_address],
-            'status': function_status_ok,
+            'status': function_status_ok
         })
 
 
@@ -153,7 +152,7 @@ if __name__ == '__main__':
 
     contracts = []
     for i in range(DEPLOYED_CONTRACTS):
-        circle = i % DEPLOYED_CONTRACTS  # TODO: not manually
+        circle = i % DEPLOYED_CONTRACTS
         contracts.append(
             ContractTest(
                 client.get_w3(),
