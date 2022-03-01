@@ -21,9 +21,6 @@ with open(__BESU_QUORUM_PATH.substitute(filename='private_keys.json')) as file:
     quorum_private_keys = json.loads(file.read())['privatekey']
 
 __POLYGON_PATH = Template('../polygon/src/${filename}')
-with open(__POLYGON_PATH.substitute(filename='address.json')) as file:
-    polygon_accounts = json.loads(file.read())['address']
-
 with open(__POLYGON_PATH.substitute(filename='private_keys.json')) as file:
     polygon_private_keys = json.loads(file.read())['privatekey']
 
