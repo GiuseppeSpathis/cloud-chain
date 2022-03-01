@@ -3,11 +3,11 @@ import os
 
 from eth_typing import ChecksumAddress, Address
 from solcx import install_solc, set_solc_version, compile_files
-from web3 import Web3, AsyncHTTPProvider, WebsocketProvider, HTTPProvider
+from web3 import Web3, AsyncHTTPProvider, HTTPProvider
 from web3.eth import AsyncEth
 from web3.middleware import geth_poa_middleware
 
-from settings import HTTP_URI, WEB_SOCKET_URI
+from settings import HTTP_URI, SOLC_VERSION, CONFIG_PATH
 from utility import get_credentials
 
 
@@ -21,12 +21,11 @@ class Web3Client:
             middlewares=[]  # geth_poa_middleware not supported yet
         )
 
-        if blockchain == 'polygon':
-            self.w3 = Web3(HTTPProvider(HTTP_URI))
-        else:
-            self.w3 = Web3(WebsocketProvider(WEB_SOCKET_URI))
+        self.w3 = Web3(HTTPProvider(HTTP_URI))
         # TODO: check middleware with HTTP method
         self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+
+        self.blockchain = blockchain
 
     # TODO: review, use @property instead of get methods
     def get_w3(self):
@@ -35,11 +34,12 @@ class Web3Client:
     def get_w3_async(self):
         return self.w3_async
 
-    def get_contract_address(self) -> {}:
+    def init_contracts(self) -> {}:
         summary = []
-        _, private_keys = get_credentials('polygon')
+        _, private_keys = get_credentials(self.blockchain)
         contract_names = ['Migrations.sol', 'FileDigestOracle.sol', 'Factory.sol']
 
+        print('Start deploy...')
         it = iter(private_keys)
         for pk_0, pk_1, pk_2 in zip(it, it, it):
             contract_addresses = []
@@ -50,7 +50,6 @@ class Web3Client:
                     contract_addresses.append(self.__deploy_contract(contract, pk))
 
             summary.append({
-                # 'contract_addresses': contract_addresses,
                 'contracts': {
                     contract_names[1]: contract_addresses[0],
                     contract_names[2]: contract_addresses[1]
@@ -58,6 +57,11 @@ class Web3Client:
                 'private_keys': [pk_0, pk_1, pk_2]
             })
 
+        filepath = CONFIG_PATH.substitute(blockchain=self.blockchain)
+        with open(filepath, 'w') as file:
+            json.dump(summary, file, indent=4)
+        print(f'Configuration saved to {os.path.join(os.getcwd(), filepath)}')
+        print('Deploy completed.')
         return summary
 
     def pks_to_addresses(self, pks: []) -> []:
@@ -74,8 +78,8 @@ class Web3Client:
         key = f'{filename}:{filename_no_ext}'
 
         # TODO: check version and install only if there isn't
-        install_solc('0.8.9')
-        set_solc_version('0.8.9')
+        install_solc(SOLC_VERSION)
+        set_solc_version(SOLC_VERSION)
 
         os.chdir('../contracts')
         compiled_sol = compile_files(
