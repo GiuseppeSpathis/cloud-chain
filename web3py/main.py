@@ -10,8 +10,8 @@ import pandas as pd
 
 from web3client import Web3Client
 from contract_functions import ContractTest
-from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS
-from utility import range_limited_thread, init_simulation
+from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS, CONFIG_PATH
+from utility import range_limited_thread, init_simulation, get_contracts_config
 
 
 def between_callback(process_count: int, fn: str):
@@ -26,7 +26,7 @@ def between_callback(process_count: int, fn: str):
 
 async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
     # Flag statuses
-    function_status_ok = False
+    function_status = False
     # Values to store
     cloud_address = 'NaN'
     start_fun, end_fun = datetime.now(), datetime.now()
@@ -34,16 +34,16 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
     try:
         if 'cloud_sla_creation_activation' in func_to_run:
             start_fun = datetime.now()
-            cloud_address, function_status_ok = await eval(func_to_run)
+            cloud_address, function_status = await eval(func_to_run)
             end_fun = datetime.now()
         else:
             start_fun = datetime.now()
-            function_status_ok = await eval(func_to_run)
+            function_status = await eval(func_to_run)
             end_fun = datetime.now()
     except ValueError as v:
         if DEBUG:
             print(f'ValueError #{process_count}: {v}')
-        function_status_ok = False
+        function_status = False
         end_fun = datetime.now()
     finally:
         duration_fun = end_fun - start_fun
@@ -54,22 +54,25 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
             'end_fun': [(end_fun - zero_time).total_seconds()],
             'time_fun': [duration_fun.total_seconds()],
             'address': [cloud_address],
-            'status': function_status_ok
+            'status': function_status
         })
 
 
 async def main():
+    print('Start init phase...')
     init = await init_simulation(contracts, args.threads, args.function)
     if not init:
-        print('MSG INIT NON RIUSCITA')
+        print('Error with init phase.')
         exit(1)
+    print('Init phase completed.')
 
-    print('MSG INIT RIUSCITA')
+    print('Start simulation...')
     jobs = []
-
     for idx in range(args.threads):
-        circular = idx % DEPLOYED_CONTRACTS
-        thread = threading.Thread(target=between_callback, args=[idx, f'contracts[{circular}].{args.function}'])
+        thread = threading.Thread(
+            target=between_callback,
+            args=[idx, f'contracts[{idx % DEPLOYED_CONTRACTS}].{args.function}']
+        )
         jobs.append(thread)
 
     # Start the threads
@@ -86,6 +89,7 @@ async def main():
         print(df)
         print(f"Status column:\n{df[['id', 'status']]}")
         print(f"Rows with status True: {len(df.loc[df['status']])}")
+    print('Simulation completed.')
 
     if args.save:
         path = os.getcwd()
@@ -95,12 +99,13 @@ async def main():
         out_file = f'async_thread_{args.function}_{args.lambda_p}_{args.threads}_{args.blockchain}.csv'
         results_path = os.path.join(out_dir, out_file)
         df.to_csv(results_path, index=False, encoding='utf-8')
+        print(f'Output file saved in {results_path}.')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Script written using web3py to test different blockchains.',
-        usage='%(prog)s blockchain function [-t TIME] [-l LAMBDA] [-s]'
+        usage='%(prog)s blockchain function [-t TIME] [-l LAMBDA] [-d] [-s]'
     )
     parser.add_argument(
         'blockchain', default='none', type=str,
@@ -133,6 +138,11 @@ if __name__ == '__main__':
         help='the lambda parameter for interarrival time Poisson'
     )
     parser.add_argument(
+        '-d', '--deploy', default=False,
+        action='store_true',
+        help='deploy contracts to blockchain'
+    )
+    parser.add_argument(
         '-s', '--save', default=False,
         action='store_true',
         help='save csv file as output'
@@ -143,25 +153,26 @@ if __name__ == '__main__':
     zero_time = datetime.now()
     df = pd.DataFrame()
     client = Web3Client(args.blockchain)
-    summary = client.get_contract_address()
 
-    '''
-    for idx, elm in enumerate(summary):
-        print(f'[{idx}]:\n {json.dumps(elm, indent=4, sort_keys=True)}')
-    '''
+    if args.deploy:
+        contracts_summary = client.init_contracts()
+    else:
+        if not os.path.exists(CONFIG_PATH.substitute(blockchain=args.blockchain)):
+            contracts_summary = client.init_contracts()
+        else:
+            contracts_summary = get_contracts_config(args.blockchain)
 
     contracts = []
     for i in range(DEPLOYED_CONTRACTS):
-        circle = i % DEPLOYED_CONTRACTS
+        index = i % DEPLOYED_CONTRACTS
         contracts.append(
             ContractTest(
                 client.get_w3(),
                 client.get_w3_async(),
-                client.pks_to_addresses(summary[circle]['private_keys']),
-                summary[circle]['private_keys'],
-                summary[circle]['contracts']
+                client.pks_to_addresses(contracts_summary[index]['private_keys']),
+                contracts_summary[index]['private_keys'],
+                contracts_summary[index]['contracts']
             )
         )
 
-    print('Start simulation...')
     exit(asyncio.run(main()))
