@@ -12,7 +12,7 @@ COMPILED_CLOUD_SLA_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='CloudSLA
 
 CONFIG_PATH = Template('./config/${blockchain}.json')
 
-DEPLOYED_CONTRACTS = 6
+DEPLOYED_CONTRACTS = 1
 
 RESULTS_CSV_DIR = 'results'
 
