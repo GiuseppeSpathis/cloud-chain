@@ -10,7 +10,7 @@ import pandas as pd
 
 from web3client import Web3Client
 from contract_functions import ContractTest
-from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS, CONFIG_PATH
+from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS, CONFIG_DIR
 from utility import range_limited_thread, init_simulation, get_contracts_config
 
 
@@ -96,7 +96,7 @@ async def main():
         out_dir = os.path.join(path, RESULTS_CSV_DIR)
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
-        out_file = f'async_thread_{args.function}_{args.lambda_p}_{args.threads}_{args.blockchain}.csv'
+        out_file = f'{args.function}_{args.lambda_p}_{args.threads}_{args.blockchain}.csv'
         results_path = os.path.join(out_dir, out_file)
         df.to_csv(results_path, index=False, encoding='utf-8')
         print(f'Output file saved in {results_path}.')
@@ -154,13 +154,19 @@ if __name__ == '__main__':
     df = pd.DataFrame()
     client = Web3Client(args.blockchain)
 
-    if args.deploy:
+    config_dir = os.path.join(os.getcwd(), CONFIG_DIR)
+    if not os.path.exists(config_dir):
+        print("Config dir doesn't exist...")
+        os.mkdir(config_dir)
+        print('Config dir created.')
+    filename = f'{args.blockchain}.json'
+    config_file = os.path.join(config_dir, filename)
+    if args.deploy or not os.path.exists(config_file):
+        if not os.path.exists(config_file):
+            print(f"Config file doesn't exist...")
         contracts_summary = client.init_contracts()
     else:
-        if not os.path.exists(CONFIG_PATH.substitute(blockchain=args.blockchain)):
-            contracts_summary = client.init_contracts()
-        else:
-            contracts_summary = get_contracts_config(args.blockchain)
+        contracts_summary = get_contracts_config(args.blockchain)
 
     contracts = []
     for i in range(DEPLOYED_CONTRACTS):
