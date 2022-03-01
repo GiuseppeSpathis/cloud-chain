@@ -37,7 +37,7 @@ class Web3Client:
 
     def init_contracts(self) -> {}:
         summary = []
-        _, private_keys = get_credentials(self.blockchain)
+        private_keys = get_credentials(self.blockchain)
         contract_names = ['Migrations.sol', 'FileDigestOracle.sol', 'Factory.sol']
 
         print('Start deploy...')

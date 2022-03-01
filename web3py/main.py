@@ -11,7 +11,7 @@ import pandas as pd
 from web3client import Web3Client
 from contract_functions import ContractTest
 from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS, CONFIG_DIR
-from utility import range_limited_thread, init_simulation, get_contracts_config
+from utility import range_limited_val, init_simulation, get_contracts_config
 
 
 def between_callback(process_count: int, fn: str):
@@ -96,7 +96,7 @@ async def main():
         out_dir = os.path.join(path, RESULTS_CSV_DIR)
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
-        out_file = f'{args.function}_{args.lambda_p}_{args.threads}_{args.blockchain}.csv'
+        out_file = f'simulation{args.num_run}_{args.function}_{args.lambda_p}_{args.blockchain}.csv'
         results_path = os.path.join(out_dir, out_file)
         df.to_csv(results_path, index=False, encoding='utf-8')
         print(f'Output file saved in {results_path}.')
@@ -105,7 +105,7 @@ async def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Script written using web3py to test different blockchains.',
-        usage='%(prog)s blockchain function [-t TIME] [-l LAMBDA] [-d] [-s]'
+        usage='%(prog)s blockchain function [-t TIME] [-l LAMBDA] [-d] [-s [-n NUM_RUN]]'
     )
     parser.add_argument(
         'blockchain', default='none', type=str,
@@ -129,7 +129,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '-t', '--threads', default=10,
-        type=range_limited_thread,
+        type=range_limited_val,
         help='the number of async threads to run'
     )
     parser.add_argument(
@@ -147,8 +147,15 @@ if __name__ == '__main__':
         action='store_true',
         help='save csv file as output'
     )
+    parser.add_argument(
+        '-n', '--num_run', default=-1,
+        type=range_limited_val,
+        help='the id number for the output file'
+    )
 
     args = parser.parse_args()
+    if args.save and args.num_run == -1:
+        parser.error("specify the id number for the output file")
 
     zero_time = datetime.now()
     df = pd.DataFrame()

@@ -5,7 +5,7 @@ from argparse import ArgumentTypeError
 from eth_typing import Address
 from web3.contract import Contract
 
-from settings import MIN_THREAD, MAX_THREAD, DEPLOYED_CONTRACTS, CONFIG_DIR
+from settings import MIN_VAL, MAX_VAL, DEPLOYED_CONTRACTS, CONFIG_DIR
 
 
 async def init_simulation(contracts: [], threads, fn: str) -> bool:
@@ -35,13 +35,13 @@ async def init_simulation(contracts: [], threads, fn: str) -> bool:
 def get_credentials(blockchain: str) -> tuple:
     if blockchain == 'polygon':
         from settings import (
-            polygon_accounts, polygon_private_keys
+            polygon_private_keys
         )
-        return polygon_accounts, polygon_private_keys
+        return polygon_private_keys
     from settings import (
-        quorum_accounts, quorum_private_keys
+        quorum_private_keys
     )
-    return quorum_accounts, quorum_private_keys
+    return quorum_private_keys
 
 
 def get_contract(w3, address: Address, compiled_contract_path: str) -> Contract:
@@ -74,7 +74,7 @@ def get_contracts_config(blockchain: str):
     return contracts_summary
 
 
-def range_limited_thread(arg: str) -> int:
+def range_limited_val(arg: str) -> int:
     """
     Type function for argparse - int within some predefined bounds.
     """
@@ -82,6 +82,6 @@ def range_limited_thread(arg: str) -> int:
         s = int(arg)
     except ValueError:
         raise ArgumentTypeError("must be a int number")
-    if s < MIN_THREAD or s > MAX_THREAD:
-        raise ArgumentTypeError(f"argument must be < {str(MIN_THREAD)} and > {str(MAX_THREAD)}")
+    if s < MIN_VAL or s > MAX_VAL:
+        raise ArgumentTypeError(f"argument must be > {str(MIN_VAL)} and < {str(MAX_VAL)}")
     return s

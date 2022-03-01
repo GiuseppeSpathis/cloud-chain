@@ -25,5 +25,5 @@ with open(__POLYGON_PATH.substitute(filename='private_keys.json')) as file:
     polygon_private_keys = json.loads(file.read())['privatekey']
 
 DEBUG = True
-MIN_THREAD = 1
-MAX_THREAD = 10000
+MIN_VAL = 0
+MAX_VAL = 10000
