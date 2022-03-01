@@ -12,7 +12,7 @@ COMPILED_CLOUD_SLA_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='CloudSLA
 
 CONFIG_PATH = Template('./config/${blockchain}.json')
 
-DEPLOYED_CONTRACTS = 6
+DEPLOYED_CONTRACTS = 1
 
 RESULTS_CSV_DIR = 'results'
 
@@ -37,7 +37,7 @@ quorum_accounts = [
     '0xA2BFD3DB8A7fD7309CF828F9da60922Fb46C968D',
     '0xcc048aE72672314bA8ed6625aB063012c3391470'
 ]
-quorum_private_keys = [
+quorum_private_keys_old = [
     '0x8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63',
     '0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3',
     '0xae6ae8e5ccbfb04590405997ee2d52d2b330726137b875053c36d94e974d162f',
@@ -57,6 +57,10 @@ quorum_private_keys = [
     '0x54004c337e99f8800f6b71626afc64d7b24884c84a6c4f33a1890774ac76dc6f',
     '0xf1abc74a176c2ece35c81dc7531fee59ce4bc755ebc391c3fcffa624af0da316'
 ]
+
+__BESU_QUORUM_PATH = Template('../besu_quorum_scripts/src/${filename}')
+with open(__BESU_QUORUM_PATH.substitute(filename='private_keys.json')) as file:
+    quorum_private_keys = json.loads(file.read())['privatekey']
 
 __POLYGON_PATH = Template('../polygon/src/${filename}')
 with open(__POLYGON_PATH.substitute(filename='address.json')) as file:
