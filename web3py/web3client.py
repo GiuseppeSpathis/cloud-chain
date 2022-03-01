@@ -2,12 +2,13 @@ import json
 import os
 
 from eth_typing import ChecksumAddress, Address
-from solcx import install_solc, set_solc_version, compile_files
+from semantic_version import Version
+from solcx import install_solc, set_solc_version, compile_files, get_installed_solc_versions
 from web3 import Web3, AsyncHTTPProvider, HTTPProvider
 from web3.eth import AsyncEth
 from web3.middleware import geth_poa_middleware
 
-from settings import HTTP_URI, SOLC_VERSION, CONFIG_PATH
+from settings import HTTP_URI, SOLC_VERSION, CONFIG_DIR
 from utility import get_credentials
 
 
@@ -23,7 +24,7 @@ class Web3Client:
 
         self.w3 = Web3(HTTPProvider(HTTP_URI))
         # TODO: check middleware with HTTP method
-        self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
+        # self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
         self.blockchain = blockchain
 
@@ -57,11 +58,12 @@ class Web3Client:
                 'private_keys': [pk_0, pk_1, pk_2]
             })
 
-        filepath = CONFIG_PATH.substitute(blockchain=self.blockchain)
+        filename = f'{self.blockchain}.json'
+        filepath = os.path.join(os.getcwd(), CONFIG_DIR, filename)
         with open(filepath, 'w') as file:
             json.dump(summary, file, indent=4)
-        print(f'Configuration saved to {os.path.join(os.getcwd(), filepath)}')
         print('Deploy completed.')
+        print(f'Config file saved to {filepath}')
         return summary
 
     def pks_to_addresses(self, pks: []) -> []:
@@ -77,8 +79,8 @@ class Web3Client:
         filename_no_ext = filename.split('.')[0]
         key = f'{filename}:{filename_no_ext}'
 
-        # TODO: check version and install only if there isn't
-        install_solc(SOLC_VERSION)
+        if Version(SOLC_VERSION) not in get_installed_solc_versions():
+            install_solc(SOLC_VERSION)
         set_solc_version(SOLC_VERSION)
 
         os.chdir('../contracts')

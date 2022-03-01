@@ -1,10 +1,11 @@
 import json
+import os
 from argparse import ArgumentTypeError
 
 from eth_typing import Address
 from web3.contract import Contract
 
-from settings import MIN_THREAD, MAX_THREAD, DEPLOYED_CONTRACTS, CONFIG_PATH
+from settings import MIN_THREAD, MAX_THREAD, DEPLOYED_CONTRACTS, CONFIG_DIR
 
 
 async def init_simulation(contracts: [], threads, fn: str) -> bool:
@@ -64,9 +65,12 @@ def check_statuses(statuses: []) -> bool:
 
 
 def get_contracts_config(blockchain: str):
-    print('Retrieve contracts config...')
-    with open(CONFIG_PATH.substitute(blockchain=blockchain)) as file:
+    print('Retrieve config file...')
+    filename = f'{blockchain}.json'
+    filepath = os.path.join(os.getcwd(), CONFIG_DIR, filename)
+    with open(filepath) as file:
         contracts_summary = json.loads(file.read())
+    print(f'Config file retrieved at {filepath}.')
     return contracts_summary
 
 
