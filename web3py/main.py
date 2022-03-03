@@ -66,6 +66,28 @@ async def main():
     print('Init phase completed.')
 
     print('Start simulation...')
+
+    start = (datetime.now() - zero_time).total_seconds()
+    actual = (datetime.now() - zero_time).total_seconds()
+    idx = 0
+    jobs = []
+    while actual < start + args.time:
+        thread = threading.Thread(
+            target=between_callback,
+            args=[idx, f'contracts[{idx % DEPLOYED_CONTRACTS}].{args.function}']
+        )
+        jobs.append(thread)
+
+        actual = (datetime.now() - zero_time).total_seconds()
+        rand = np.random.exponential(1 / args.lambda_p)
+        await asyncio.sleep(rand)
+        jobs[idx].start()
+        idx += 1
+
+    for j in jobs:
+        j.join()
+
+    '''
     jobs = []
     for idx in range(args.threads):
         thread = threading.Thread(
@@ -83,6 +105,7 @@ async def main():
     # Ensure all the threads have finished
     for j in jobs:
         j.join()
+    '''
 
     if DEBUG:
         print(df)
@@ -127,9 +150,9 @@ if __name__ == '__main__':
         help='the name of the function to stress'
     )
     parser.add_argument(
-        '-t', '--threads', default=10,
+        '-t', '--time', default=10,
         type=range_limited_val,
-        help='the number of async threads to run'
+        help='the number of seconds to run'
     )
     parser.add_argument(
         '-l', '--lambda_p', default=.5,
