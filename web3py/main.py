@@ -11,7 +11,7 @@ import pandas as pd
 from web3client import Web3Client
 from contract_functions import ContractTest
 from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS, CONFIG_DIR
-from utility import range_limited_val, init_simulation, get_contracts_config
+from utility import range_limited_val, init_simulation, get_contracts_config, time_delete_parameter
 
 
 def between_callback(process_count: int, fn: str):
@@ -59,7 +59,7 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
 
 async def main():
     print('Start init phase...')
-    init = await init_simulation(contracts, args.threads, args.function)
+    init = await init_simulation(contracts, time_delete_parameter(args.blockchain)*args.time, args.function)
     if not init:
         print('Error with init phase.')
         exit(1)
