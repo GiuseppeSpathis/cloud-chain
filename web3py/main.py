@@ -96,7 +96,7 @@ async def main():
         out_dir = os.path.join(path, RESULTS_CSV_DIR)
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
-        out_file = f'simulation{args.num_run}_{args.function}_{args.lambda_p}_{args.blockchain}.csv'
+        out_file = f'simulation{args.num_run}_{args.lambda_p}_{args.function}_{args.blockchain}.csv'
         results_path = os.path.join(out_dir, out_file)
         df.to_csv(results_path, index=False, encoding='utf-8')
         print(f'Output file saved in {results_path}.')
@@ -168,13 +168,14 @@ if __name__ == '__main__':
         print('Config dir created.')
     filename = f'{args.blockchain}.json'
     config_file = os.path.join(config_dir, filename)
-    if args.deploy or not os.path.exists(config_file):
-        # TODO: review
-        if not os.path.exists(config_file):
-            print(f"Config file doesn't exist...")
+    if args.deploy:
         contracts_summary = client.init_contracts()
     else:
-        contracts_summary = get_contracts_config(args.blockchain)
+        if not os.path.exists(config_file):
+            print(f"Config file doesn't exist...")
+            contracts_summary = client.init_contracts()
+        else:
+            contracts_summary = get_contracts_config(args.blockchain)
 
     contracts = []
     for i in range(DEPLOYED_CONTRACTS):
