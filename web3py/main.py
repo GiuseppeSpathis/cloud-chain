@@ -169,6 +169,7 @@ if __name__ == '__main__':
     filename = f'{args.blockchain}.json'
     config_file = os.path.join(config_dir, filename)
     if args.deploy or not os.path.exists(config_file):
+        # TODO: review
         if not os.path.exists(config_file):
             print(f"Config file doesn't exist...")
         contracts_summary = client.init_contracts()

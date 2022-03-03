@@ -6,7 +6,6 @@ from semantic_version import Version
 from solcx import install_solc, set_solc_version, compile_files, get_installed_solc_versions
 from web3 import Web3, AsyncHTTPProvider, HTTPProvider
 from web3.eth import AsyncEth
-from web3.middleware import geth_poa_middleware
 
 from settings import HTTP_URI, SOLC_VERSION, CONFIG_DIR
 from utility import get_credentials
@@ -21,11 +20,7 @@ class Web3Client:
             },
             middlewares=[]  # geth_poa_middleware not supported yet
         )
-
         self.w3 = Web3(HTTPProvider(HTTP_URI))
-        # TODO: check middleware with HTTP method
-        # self.w3.middleware_onion.inject(geth_poa_middleware, layer=0)
-
         self.blockchain = blockchain
 
     # TODO: review, use @property instead of get methods
