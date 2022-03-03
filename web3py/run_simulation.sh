@@ -1,11 +1,11 @@
 #!/bin/bash
 . <(curl -sLo- "https://git.io/progressbar")
+SIMULATION_TIME=100
+repetition=40
 echo -n -e "Insert the simulation time\n"
-#read SIMULATION_TIME
-SIMULATION_TIME=2
+read SIMULATION_TIME
 echo -n -e "Insert the number of repetition\n"
-#read repetition
-repetition=2
+read repetition
 declare -a lambda=(2 1 0.5 0.2 0.1)
 declare -a functions=(
     'read'
@@ -24,21 +24,22 @@ bar::start
 for (( lambdaidx=0; lambdaidx<5; lambdaidx++ ))
 do
     
-    echo -e "lambda ${lambda[$lambdaidx]}\n"
+    echo -e "\n\nStart simulation with lambda: ${lambda[$lambdaidx]}\n"
     for ((m=0; m<=8; m++ ))
     do
         
-        echo -ne "${functions[$m]} start                  \r"
+        echo -ne " - ${functions[$m]} start                  \r"
         for (( r=0; r<${repetition}; r++ ))
         do
             ((counter=counter+1))
             bar::status_changed $counter $Max
             #sleep 0.1
-            python main.py polygon ${functions[$m]} -l ${lambda[$lambdaidx]} -t ${SIMULATION_TIME} -s -n ${r} 
+            python main.py polygon ${functions[$m]} -l ${lambda[$lambdaidx]} -t ${SIMULATION_TIME} -s -n ${r} &> /dev/null
         done
-        echo -ne "${functions[$m]} done                  \r"
+        echo -ne " - ${functions[$m]} done                   \r"
         #sleep 0.09
+        echo -e "\n"
     done
-    echo -e "\n Done \n"
+    echo -e "\nEnd of simulation with lambda: ${lambda[$lambdaidx]} \n"
 done
 bar::stop
