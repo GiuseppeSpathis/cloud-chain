@@ -41,8 +41,7 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
             function_status = await eval(func_to_run)
             end_fun = datetime.now()
     except ValueError as v:
-        if DEBUG:
-            print(f'ValueError #{process_count}: {v}')
+        print(f'{type(v)} [get_time#{process_count}]: {v}')
         function_status = False
         end_fun = datetime.now()
     finally:

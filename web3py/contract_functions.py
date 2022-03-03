@@ -35,7 +35,6 @@ class ContractTest:
         self.lock = threading.Lock()
 
     def set_cloud_sla_address(self, address: Address):
-        # TODO: use @property for get/set
         self.cloud_address = address
 
     async def get_nonce(self, idx: int):
@@ -48,8 +47,7 @@ class ContractTest:
             tx_hash = await self.w3_async.eth.send_raw_transaction(signed_tx.rawTransaction)
             tx_receipt = await self.w3_async.eth.wait_for_transaction_receipt(tx_hash, timeout=20)
         except (ValueError, TimeExhausted) as e:
-            if DEBUG:
-                print(f"{type(e)} [sign_send]: {e}")
+            print(f'{type(e)} [sign_send]: {e}')
             return 0
         else:
             return tx_receipt['status']
@@ -80,8 +78,6 @@ class ContractTest:
         })
         statuses.append(await self.sign_send_transaction(tx_create_child, self.private_keys[0]))
 
-        # tx_sm_address = await self.w3_async.eth.call(contract_factory.functions.getSmartContractAddress(
-        # self.accounts[1]))
         tx_sm_address = contract_factory.functions.getSmartContractAddress(
             self.accounts[1]
         ).call()

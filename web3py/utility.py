@@ -26,8 +26,7 @@ async def init_simulation(contracts: [], threads, fn: str) -> bool:
                 for _ in range(round(threads / DEPLOYED_CONTRACTS) + 1):
                     statuses.append(await c.upload())
     except ValueError as v:
-        # TODO: think about
-        print(f'ValueError [init_sim]: {v}')
+        print(f'{type(v)} [init_sim]: {v}')
     else:
         return check_statuses(statuses)
 
