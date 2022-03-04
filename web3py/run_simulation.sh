@@ -1,7 +1,7 @@
 #!/bin/bash
 . <(curl -sLo- "https://git.io/progressbar")
-SIMULATION_TIME=100
-repetition=40
+SIMULATION_TIME=60
+repetition=10
 echo -n -e "Insert the simulation time\n"
 read SIMULATION_TIME
 echo -n -e "Insert the number of repetition\n"
@@ -10,7 +10,7 @@ declare -a lambda=(2 1 0.5 0.2 0.1)
 declare -a functions=(
     'read'
     'upload'
-    'delete'
+    #'delete'
     'another_file_upload'
     'another_file_upload_read'
     'file_check_undeleted_file'
