@@ -13,7 +13,7 @@ COMPILED_CLOUD_SLA_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='CloudSLA
 CONFIG_DIR = 'config'
 RESULTS_CSV_DIR = 'results'
 
-DEPLOYED_CONTRACTS = 8
+DEPLOYED_CONTRACTS = 10
 
 # Preloaded accounts
 quorum_private_keys = [
@@ -48,6 +48,6 @@ __POLYGON_PATH = Template('../polygon/src/${filename}')
 with open(__POLYGON_PATH.substitute(filename='private_keys.json')) as file:
     polygon_private_keys = json.loads(file.read())['privatekey']
 
-DEBUG = True
+DEBUG = False
 MIN_VAL = 0
 MAX_VAL = 10000

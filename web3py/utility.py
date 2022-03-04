@@ -16,7 +16,7 @@ def time_delete_parameter(blockchain):
     return res
 
 
-async def init_simulation(contracts: [], threads, fn: str) -> bool:
+async def init_simulation(contracts: [], factor: float, fn: str) -> bool:
     statuses = []
     try:
         for c in contracts:
@@ -31,7 +31,7 @@ async def init_simulation(contracts: [], threads, fn: str) -> bool:
             if fn == 'corrupted_file_check':
                 statuses.append(await c.another_file_upload_read())
             if fn == 'delete':
-                for _ in range(round(threads / DEPLOYED_CONTRACTS) + 1):
+                for _ in range(round(factor / DEPLOYED_CONTRACTS) + 1):
                     statuses.append(await c.upload())
     except ValueError as v:
         print(f'{type(v)} [init_sim]: {v}')

@@ -59,8 +59,7 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
 
 async def main():
     print('Start init phase...')
-    print(f'num of upload to be deleted: {(args.lambda_p + 0.1) * args.time}')
-    init = await init_simulation(contracts, (args.lambda_p + 0.1)*args.time, args.function)
+    init = await init_simulation(contracts, (args.lambda_p + 0.1) * args.time, args.function)
     if not init:
         print('Error with init phase.')
         exit(1)
