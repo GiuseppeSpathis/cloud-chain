@@ -48,6 +48,6 @@ __POLYGON_PATH = Template('../polygon/src/${filename}')
 with open(__POLYGON_PATH.substitute(filename='private_keys.json')) as file:
     polygon_private_keys = json.loads(file.read())['privatekey']
 
-DEBUG = False
+DEBUG = True
 MIN_VAL = 0
 MAX_VAL = 10000

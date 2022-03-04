@@ -11,7 +11,7 @@ import pandas as pd
 from web3client import Web3Client
 from contract_functions import ContractTest
 from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS, CONFIG_DIR
-from utility import range_limited_val, init_simulation, get_contracts_config, time_delete_parameter
+from utility import range_limited_val, init_simulation, get_contracts_config
 
 
 def between_callback(process_count: int, fn: str):
@@ -53,7 +53,9 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
             'end_fun': [(end_fun - zero_time).total_seconds()],
             'time_fun': [duration_fun.total_seconds()],
             'address': [cloud_address],
-            'status': function_status
+            'status': function_status,
+            'lambda': args.lambda_p,
+            'num_run': args.num_run
         })
 
 
@@ -86,26 +88,6 @@ async def main():
 
     for j in jobs:
         j.join()
-
-    '''
-    jobs = []
-    for idx in range(args.threads):
-        thread = threading.Thread(
-            target=between_callback,
-            args=[idx, f'contracts[{idx % DEPLOYED_CONTRACTS}].{args.function}']
-        )
-        jobs.append(thread)
-
-    # Start the threads
-    for j in jobs:
-        j.start()
-        rand = np.random.exponential(1 / args.lambda_p)
-        await asyncio.sleep(rand)
-
-    # Ensure all the threads have finished
-    for j in jobs:
-        j.join()
-    '''
 
     if DEBUG:
         print(df)

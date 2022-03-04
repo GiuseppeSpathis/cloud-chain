@@ -8,14 +8,6 @@ from web3.contract import Contract
 from settings import MIN_VAL, MAX_VAL, DEPLOYED_CONTRACTS, CONFIG_DIR
 
 
-def time_delete_parameter(blockchain):
-    if blockchain == "polygon":
-        res = 3
-    else:
-        res = 0.5
-    return res
-
-
 async def init_simulation(contracts: [], factor: float, fn: str) -> bool:
     statuses = []
     try:
