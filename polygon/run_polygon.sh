@@ -6,7 +6,7 @@ declare -a node_ids
 
 
 declare -i NUM_VALIDATORS=4
-declare -i NUM_ACCOUNTS=30
+declare -i NUM_ACCOUNTS=60
 
 
 if [ $VAR = "yes" ]
@@ -17,10 +17,6 @@ then
     
     echo -n -e "\nHow many validators do you want? (4, 8, 12)\n"
     read num
-    if (($num!=4))| (($num != 8))| (($num != 12))
-    then
-        num=4
-    fi
     NUM_VALIDATORS=$num
     
     rm -rf src
@@ -159,7 +155,7 @@ do
     fi
 done
 
-
+#echo $command_run
 echo -n -e "Do you want run the newtork (yes/no)\n"
 read VAR
 if [ $VAR = "yes" ]

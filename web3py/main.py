@@ -11,7 +11,7 @@ import pandas as pd
 from web3client import Web3Client
 from contract_functions import ContractTest
 from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS, CONFIG_DIR
-from utility import range_limited_val, init_simulation, get_contracts_config
+from utility import range_limited_val, init_simulation, get_contracts_config, exists_mkdir
 
 
 def between_callback(process_count: int, fn: str):
@@ -97,10 +97,11 @@ async def main():
 
     if args.save:
         path = os.getcwd()
-        out_dir = os.path.join(path, RESULTS_CSV_DIR)
-        if not os.path.exists(out_dir):
-            os.mkdir(out_dir)
-        out_file = f'simulation{args.num_run}_{args.lambda_p}_{args.function}_{args.blockchain}.csv'
+        results_dir = os.path.join(path, RESULTS_CSV_DIR)
+        test_dir = os.path.join(results_dir, args.experiment)
+        out_dir = os.path.join(test_dir, args.function)
+        exists_mkdir([results_dir, test_dir, out_dir])
+        out_file = f'simulation{args.num_run}_{args.lambda_p}_{args.function}_{args.experiment}.csv'
         results_path = os.path.join(out_dir, out_file)
         df.to_csv(results_path, index=False, encoding='utf-8')
         print(f'Output file saved in {results_path}.')
@@ -109,7 +110,7 @@ async def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Script written using web3py to test different blockchains.',
-        usage='%(prog)s blockchain function [-t TIME] [-l LAMBDA] [-d] [-s [-n NUM_RUN]]'
+        usage='%(prog)s blockchain function [-t TIME] [-l LAMBDA] [-d] [-s [-n NUM_RUN] [-e] EXPERIMENT]'
     )
     parser.add_argument(
         'blockchain', default='none', type=str,
@@ -156,10 +157,27 @@ if __name__ == '__main__':
         type=range_limited_val,
         help='the id number for the output file'
     )
+    parser.add_argument(
+        '-e', '--experiment', default='none', type=str,
+        choices=[
+            'polygon_ibft_4',
+            'polygon_pos_4',
+            'besu_qbft_4',
+            'besu_ibft_4',
+            'besu_clique_4',
+            'go-quorum_qbft_4',
+            'go-quorum_ibft_4',
+            'go-quorum_raft_4'
+        ],
+        help='the output folder of the experiment'
+    )
 
     args = parser.parse_args()
-    if args.save and args.num_run == -1:
-        parser.error("specify the id number for the output file")
+    if args.save:
+        if args.num_run == -1:
+            parser.error("specify the id number for the output file")
+        if args.experiment == 'none':
+            parser.error("specify the experiment folder for the output file")
 
     zero_time = datetime.now()
     df = pd.DataFrame()

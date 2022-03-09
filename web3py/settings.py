@@ -13,7 +13,7 @@ COMPILED_CLOUD_SLA_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='CloudSLA
 CONFIG_DIR = 'config'
 RESULTS_CSV_DIR = 'results'
 
-DEPLOYED_CONTRACTS = 10
+DEPLOYED_CONTRACTS = 20
 
 # Preloaded accounts
 quorum_private_keys = [

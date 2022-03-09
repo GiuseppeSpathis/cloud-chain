@@ -63,6 +63,12 @@ def check_statuses(statuses: []) -> bool:
     return True
 
 
+def exists_mkdir(paths: []):
+    for path in paths:
+        if not os.path.exists(path):
+            os.mkdir(path)
+
+
 def get_contracts_config(blockchain: str):
     print('Retrieve config file...')
     filename = f'{blockchain}.json'
