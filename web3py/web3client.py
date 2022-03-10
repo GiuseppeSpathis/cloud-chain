@@ -23,13 +23,6 @@ class Web3Client:
         self.w3 = Web3(HTTPProvider(HTTP_URI))
         self.blockchain = blockchain
 
-    # TODO: review, use @property instead of get methods
-    def get_w3(self):
-        return self.w3
-
-    def get_w3_async(self):
-        return self.w3_async
-
     def init_contracts(self) -> {}:
         summary = []
         private_keys = get_credentials(self.blockchain)

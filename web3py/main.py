@@ -204,8 +204,8 @@ if __name__ == '__main__':
         index = i % DEPLOYED_CONTRACTS
         contracts.append(
             ContractTest(
-                client.get_w3(),
-                client.get_w3_async(),
+                client.w3,
+                client.w3_async,
                 client.pks_to_addresses(contracts_summary[index]['private_keys']),
                 contracts_summary[index]['private_keys'],
                 contracts_summary[index]['contracts']
