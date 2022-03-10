@@ -13,7 +13,7 @@ COMPILED_CLOUD_SLA_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='CloudSLA
 CONFIG_DIR = 'config'
 RESULTS_CSV_DIR = 'results'
 
-DEPLOYED_CONTRACTS = 30
+DEPLOYED_CONTRACTS = 10
 
 __QUORUM_PATH = '../quorum/src/private_keys.json'
 with open(__QUORUM_PATH) as file:

@@ -1,6 +1,7 @@
 import asyncio
 
 import argparse
+import json
 import os
 import threading
 from datetime import datetime
@@ -61,7 +62,7 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
 
 async def main():
     print('Start init phase...')
-    init = await init_simulation(contracts, (args.lambda_p + 0.1) * args.time, args.function)
+    init = await init_simulation(contracts, (args.lambda_p + 0.1) * args.time, args.function, client.status_init)
     if not init:
         print('Error with init phase.')
         exit(1)
@@ -94,6 +95,16 @@ async def main():
         print(f"Status column:\n{df[['id', 'status']]}")
         print(f"Rows with status True: {len(df.loc[df['status']])}")
     print('Simulation completed.')
+
+    update_summary = get_contracts_config(args.blockchain)
+    for idx, c in enumerate(contracts):
+        update_summary[idx]['cloud_address'] = c.cloud_address
+        update_summary[idx]['tx_upload_count'] = c.tx_upload_count
+
+    filename = f'{args.blockchain}.json'
+    filepath = os.path.join(os.getcwd(), CONFIG_DIR, filename)
+    with open(filepath, 'w') as file:
+        json.dump(update_summary, file, indent=4)
 
     if args.save:
         path = os.getcwd()
@@ -208,7 +219,9 @@ if __name__ == '__main__':
                 client.w3_async,
                 client.pks_to_addresses(contracts_summary[index]['private_keys']),
                 contracts_summary[index]['private_keys'],
-                contracts_summary[index]['contracts']
+                contracts_summary[index]['contracts'],
+                contracts_summary[index]['cloud_address'],
+                contracts_summary[index]['tx_upload_count']
             )
         )
 

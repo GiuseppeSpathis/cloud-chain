@@ -8,23 +8,31 @@ from web3.contract import Contract
 from settings import MIN_VAL, MAX_VAL, DEPLOYED_CONTRACTS, CONFIG_DIR
 
 
-async def init_simulation(contracts: [], factor: float, fn: str) -> bool:
-    statuses = []
+async def init_simulation(contracts: [], factor: float, fn: str, status_init: bool) -> bool:
+    statuses = [True]
     try:
-        for c in contracts:
-            # Use different cloud_addresses for each contract instance
-            cloud_address, cloud_status_ok = await c.cloud_sla_creation_activation()
-            c.set_cloud_sla_address(cloud_address)
-            statuses.append(cloud_status_ok)
-            if fn == 'read' or fn == 'read_deny_lost_file_check' or fn == 'file_check_undeleted_file':
-                statuses.append(await c.upload())
-            if fn == 'file_check_undeleted_file':
-                statuses.append(await c.read())
-            if fn == 'corrupted_file_check':
-                statuses.append(await c.another_file_upload_read())
-            if fn == 'delete':
-                for _ in range(round(factor / DEPLOYED_CONTRACTS) + 1):
+        if status_init:
+            for c in contracts:
+                # Use different cloud_addresses for each contract instance
+                cloud_address, cloud_status_ok = await c.cloud_sla_creation_activation()
+                c.set_cloud_sla_address(cloud_address)
+                statuses.append(cloud_status_ok)
+                if fn == 'read' or fn == 'read_deny_lost_file_check' or fn == 'file_check_undeleted_file':
                     statuses.append(await c.upload())
+                if fn == 'file_check_undeleted_file':
+                    statuses.append(await c.read())
+                if fn == 'corrupted_file_check':
+                    statuses.append(await c.another_file_upload_read())
+                if fn == 'delete':
+                    for _ in range(round(factor / DEPLOYED_CONTRACTS) + 1):
+                        statuses.append(await c.upload())
+        else:
+            for c in contracts:
+                if fn == 'delete':
+                    if c.tx_upload_count < round(factor / DEPLOYED_CONTRACTS) + 1:
+                        for _ in range(abs(c.tx_upload_count - (round(factor / DEPLOYED_CONTRACTS) + 1))):
+                            statuses.append(await c.upload())
+
     except ValueError as v:
         print(f'{type(v)} [init_sim]: {v}')
     else:

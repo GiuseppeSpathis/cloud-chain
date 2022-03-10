@@ -18,7 +18,9 @@ class ContractTest:
             w3_async: Web3,
             accounts: [],
             private_keys: [],
-            contract_addresses: {}
+            contract_addresses: {},
+            cloud_address: str,
+            tx_upload_count: int
     ):
         self.w3 = w3
         self.w3_async = w3_async
@@ -26,12 +28,12 @@ class ContractTest:
         # Contracts address
         self.oracle_address = contract_addresses['FileDigestOracle.sol']
         self.factory_address = contract_addresses['Factory.sol']
-        self.cloud_address = Address(b'0x0')
+        self.cloud_address = Address(cloud_address)
 
         self.accounts, self.private_keys = accounts, private_keys
 
         self.filepaths = []
-        self.tx_upload_count = 0
+        self.tx_upload_count = tx_upload_count
         self.lock = threading.Lock()
 
     def set_cloud_sla_address(self, address: Address):

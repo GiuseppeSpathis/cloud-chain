@@ -22,8 +22,9 @@ class Web3Client:
         )
         self.w3 = Web3(HTTPProvider(HTTP_URI))
         self.blockchain = blockchain
+        self.status_init = False
 
-    def init_contracts(self) -> {}:
+    def init_contracts(self) -> []:
         summary = []
         private_keys = get_credentials(self.blockchain)
         contract_names = ['Migrations.sol', 'FileDigestOracle.sol', 'Factory.sol']
@@ -43,7 +44,9 @@ class Web3Client:
                     contract_names[1]: contract_addresses[0],
                     contract_names[2]: contract_addresses[1]
                 },
-                'private_keys': [pk_0, pk_1, pk_2]
+                'private_keys': [pk_0, pk_1, pk_2],
+                'cloud_address': '0x0',
+                'tx_upload_count': 0
             })
 
         filename = f'{self.blockchain}.json'
@@ -52,6 +55,7 @@ class Web3Client:
             json.dump(summary, file, indent=4)
         print('Deploy completed.')
         print(f'Config file saved to {filepath}')
+        self.status_init = True
         return summary
 
     def pks_to_addresses(self, pks: []) -> []:
