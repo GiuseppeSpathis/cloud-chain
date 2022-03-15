@@ -1,9 +1,9 @@
 #!/bin/bash
 . <(curl -sLo- "https://git.io/progressbar")
-SIMULATION_TIME=200
-repetition=15
+SIMULATION_TIME=600
+repetition=5
 blockchain=besu
-experiment=besu_qbft_4
+experiment=besu_clique_4
 echo -n -e "Insert the simulation time\n"
 read SIMULATION_TIME
 echo -n -e "Insert the number of repetition\n"
@@ -14,15 +14,11 @@ echo -n -e "Insert the experiment\n"
 read experiment
 declare -a lambda=(2 1 0.5)
 declare -a functions=(
-  #'cloud_sla_creation_activation'
   'upload'
-  #'read'
-  #'delete'
-  #'file_check_undeleted_file'
-  #'another_file_upload'
-  #'read_deny_lost_file_check'
-  #'another_file_upload_read'
-  #'corrupted_file_check'
+  'read'
+  'delete'
+  'read_deny_lost_file_check'
+  'file_check_undeleted_file'
 )
 
 NUM_LAMBDA=${#lambda[@]}
