@@ -2,10 +2,10 @@
 **/polygon/polygon-network
 **/polygon/src
 **/polygon/staking-contracts
-**/web3py/__pycache__
-**/web3py/results
-**/web3py/config
-**/web3py/.pytest_cache
+**/simulation-web3py/__pycache__
+**/simulation-web3py/results
+**/simulation-web3py/config
+**/simulation-web3py/.pytest_cache
 **/statistics-web3py/__pycache__
 **/statistics-web3py/results/*
 **/statistics-web3py/config

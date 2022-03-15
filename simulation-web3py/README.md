@@ -32,4 +32,4 @@ python main.py -h
 
 ## Collecting data simulation
 
-The [*run_simulation.sh*](https://github.com/cotus997/cloud-chain-simulation/blob/main/web3py/run_simulation.sh) script helped us to automate the data collection. Also in this script there aren't any handle of typing errror.
+The [*run_simulation.sh*](https://github.com/cotus997/cloud-chain-simulation/blob/main/simulation-web3py/run_simulation.sh) script helped us to automate the data collection. Also in this script there aren't any handle of typing errror.
