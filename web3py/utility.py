@@ -77,13 +77,15 @@ def exists_mkdir(paths: []):
             os.mkdir(path)
 
 
-def get_contracts_config(blockchain: str):
-    print('Retrieve config file...')
+def get_contracts_config(blockchain: str, msg: bool = True):
+    if msg:
+        print('Retrieve config file...')
     filename = f'{blockchain}.json'
     filepath = os.path.join(os.getcwd(), CONFIG_DIR, filename)
     with open(filepath) as file:
         contracts_summary = json.loads(file.read())
-    print(f'Config file retrieved at {filepath}.')
+    if msg:
+        print(f'Config file retrieved at {filepath}.')
     return contracts_summary
 
 

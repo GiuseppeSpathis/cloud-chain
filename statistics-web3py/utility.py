@@ -26,6 +26,10 @@ def filter_lambda_status(df: pd.DataFrame, lambda_p: float, status: bool = True)
     return df[(df['lambda'] == lambda_p) & (df['status'] == status)]
 
 
+def filter_transient_time(df: pd.DataFrame, time: np.float64) -> pd.DataFrame:
+    return df[df['start_fun'] > time]
+
+
 def processing(df: pd.DataFrame, operation, count_row: bool = False) -> np.ndarray:
     data = np.array([])
     # TODO: verify with size instead of len

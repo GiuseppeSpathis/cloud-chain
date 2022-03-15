@@ -1,39 +1,35 @@
-# cloud-chain
+# simulation-web3py
 
-## Blockchain informations
+We used the [web3py](https://web3py.readthedocs.io/en/stable/) library to interact with the contract [*CloudSLA.sol*](https://github.com/cotus997/cloud-chain-simulation/blob/main/contracts/CloudSLA.sol). In particular we used asynchronous call to test the following contract functions:
 
-| Blokchain | Consensus mechanisms        | Validator nodes | Interarrival time Poisson (λ) |
-| :--- |:----------------------------| :--- | :--- |
-| GoQuorum | IBFT, IBFT2.0, QBFT, Clique | 4, 8, 12 | 2, 1, 1/2, 1/5, 1/10 |
-| Hyperledger Besu | IBFT, IBFT2.0, QBFT, Clique | 4, 8, 12 | 2, 1, 1/2, 1/5, 1/10 |
-| Polygon | IBFT (PoA), IBFT (PoS)      | 4, 8, 12 | 2, 1, 1/2, 1/5, 1/10 |
+- `upload`
+- `read`
+- `delete`
+- `read_deny_lost_file_check`
+- `file_check_undeleted_file`
 
-## Test configurations
+In order to make a good simulation we also used threads.
 
-| ID | poly - besu - goqu                    | Validator nodes | Interarrival time Poisson (λ) |
-| :--- |:--------------------------------------| :--- | :--- |
-| 1 | IBFT (PoA) vs IBFT vs IBFT            | 4, 8, 12 | 2, 1, 1/2, 1/5, 1/10 |
-| 2 | IBFT (PoA) vs IBFT2.0 vs IBFT2.0      | 4, 8, 12 | 2, 1, 1/2, 1/5, 1/10 |
-| 3 | IBFT (PoA) vs QBFT vs QBFT                  | 4, 8, 12 | 2, 1, 1/2, 1/5, 1/10 |
-| 4 | IBFT (PoA) vs Clique vs Clique              | 4, 8, 12 | 2, 1, 1/2, 1/5, 1/10 |
-| 5 | IBFT (PoS) vs IBFT2.0 vs IBFT2.0      | 4, 8, 12 | 2, 1, 1/2, 1/5, 1/10 |
+## Setup
 
-### Fixed values
-- Gas limit: 0xf7b760 (?)
-- Block period seconds: 5 (?)
+To execute the script, Python must be installed([download](https://www.python.org/downloads/)), and some external libraries must be downloaded and installed using the pip (or pip3) package manager:
 
-## Parameters to measure
+```bash
+pip install -r requirements.txt
+```
 
-- Service time -> response time
-  - mean, min, max, median
-- Is busy -> use of blockchain
-  - mean, min, max, median
-- ...
-- Is there a transient? (parallel requests)
+## Usage
 
-## Problems
+```python
+python main.py blockchain function [-t TIME] [-l LAMBDA] [-d] [-s [-n NUM_RUN] [-e EXPERIMENT]]
+```
 
- - With low interarrival time the blockchain doesn't accept the nonce specified in the transactions, and it fails
- - Re-run `cloud_sla_creation_activation()` to obtain new address instead of use the old one
- - Modify price for the `contract_cloud_sla.functions.Deposit()`, it is too high
- - Aggregate specific functions for a single run
+To know the allowed parameters use
+
+```python
+python main.py -h
+```
+
+## Collecting data simulation
+
+The [*run_simulation.sh*](https://github.com/cotus997/cloud-chain-simulation/blob/main/web3py/run_simulation.sh) script helped us to automate the data collection. Also in this script there aren't any handle of typing errror.

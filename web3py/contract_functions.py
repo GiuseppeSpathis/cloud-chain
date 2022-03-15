@@ -59,7 +59,7 @@ class ContractTest:
 
         # Parameters
         price = Web3.toWei(0.001, 'ether')  # 5
-        test_validity_duration = 60 ** 2
+        test_validity_duration = (60 ** 2) * 24 * 7
 
         # Contracts
         contract_factory = get_contract(self.w3, self.factory_address, COMPILED_FACTORY_PATH)

@@ -96,13 +96,13 @@ async def main():
         print(f"Rows with status True: {len(df.loc[df['status']])}")
     print('Simulation completed.')
 
-    update_summary = get_contracts_config(args.blockchain)
+    update_summary = get_contracts_config(args.blockchain, msg=False)
     for idx, c in enumerate(contracts):
         update_summary[idx]['cloud_address'] = c.cloud_address
         update_summary[idx]['tx_upload_count'] = c.tx_upload_count
 
-    filename = f'{args.blockchain}.json'
-    filepath = os.path.join(os.getcwd(), CONFIG_DIR, filename)
+    config = f'{args.blockchain}.json'
+    filepath = os.path.join(os.getcwd(), CONFIG_DIR, config)
     with open(filepath, 'w') as file:
         json.dump(update_summary, file, indent=4)
 
