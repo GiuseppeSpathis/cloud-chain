@@ -1,4 +1,7 @@
+from string import Template
+
 SIMULATION_TIME = 300
+RESULTS_GENERIC_PATH = Template('..\\web3py\\results\\$phase\\$experiement\\$folder')
 
 functions = [
     'cloud_sla_creation_activation',
