@@ -66,4 +66,6 @@ def calculate_print_transient(df: pd.DataFrame, title: str) -> None:
     fig, ax = _dark_subplots()
     fig.suptitle(title, fontsize=15)
     ax.plot(smooth_data[:60])
+    plt.xlabel('# user')
+    plt.ylabel('time (s)')
     plt.show()

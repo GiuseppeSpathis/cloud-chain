@@ -5,6 +5,16 @@ import numpy as np
 import pandas as pd
 
 
+def experiment_path(transient: bool, experiment: str) -> Template:
+    if transient:
+        from settings import TRANSIENT_PATH
+        phase_path = TRANSIENT_PATH
+    else:
+        from settings import STEADY_STATE_PATH
+        phase_path = STEADY_STATE_PATH
+    return Template(f'{phase_path}\\{experiment}\\$folder')
+
+
 def read_csv(path: Template, functions: []) -> {}:
     dict_df = {}
     for fn in functions:

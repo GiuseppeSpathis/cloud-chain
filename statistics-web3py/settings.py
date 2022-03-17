@@ -1,18 +1,17 @@
 from string import Template
 
 SIMULATION_TIME = 300
-RESULTS_GENERIC_PATH = Template('..\\web3py\\results\\$phase\\$experiement\\$folder')
+
+_RESULTS_PHASE_PATH = Template('..\\simulation-web3py\\results\\$phase')
+TRANSIENT_PATH = _RESULTS_PHASE_PATH.substitute(phase='transient_200_15')
+STEADY_STATE_PATH = _RESULTS_PHASE_PATH.substitute(phase='steady_state_600_5')
 
 functions = [
-    'cloud_sla_creation_activation',
     'read',
     'upload',
     'delete',
     'file_check_undeleted_file',
-    'another_file_upload',
-    'read_deny_lost_file_check',
-    'another_file_upload_read',
-    'corrupted_file_check'
+    'read_deny_lost_file_check'
 ]
 
 lambdas = [
@@ -28,6 +27,6 @@ folders = [
     'besu_ibft_4',
     'besu_clique_4',
     'go-quorum_qbft_4',
-    'go-quorum_ibft_4'
+    'go-quorum_ibft_4',
     'go-quorum_raft_4'
 ]
