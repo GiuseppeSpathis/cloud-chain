@@ -17,7 +17,7 @@ def main():
             if args.transient:
                 calculate_print_transient(df_filter, f'{args.experiment[:-2]} - lambda {lambda_p}')
             else:
-                print(f'{lambda_p} - {fn.upper()}')
+                print(f'\n{lambda_p} - {fn.upper()}')
                 print(f'avg_response_time: {response_time_blockchain(df_filter, np.mean)}')
                 print(f'min_response_time: {response_time_blockchain(df_filter, np.min)}')
                 print(f'max_response_time: {response_time_blockchain(df_filter, np.max)}')
@@ -25,6 +25,7 @@ def main():
                 print(f'number of users: {number_users_system(df_filter)}')
                 # df_truncated = filter_transient_time(df_filter, np.float64(50.))
                 df_error = filter_lambda_status(df_fn, lambda_p, status=False)
+
                 if df_error.shape[0] == 0:
                     print('No errors inside the experiment')
                 else:

@@ -42,14 +42,14 @@ def filter_transient_time(df: pd.DataFrame, time: np.float64) -> pd.DataFrame:
 
 def processing(df: pd.DataFrame, operation, count_row: bool = False) -> np.ndarray:
     data = np.array([])
-    # TODO: verify with size instead of len
-    num_repetition = len(df.groupby('num_run'))
-    for num_run in range(num_repetition):
+    num_repetition = df['num_run'].unique()
+    for num_run in num_repetition:
         df_tmp = df[df['num_run'] == num_run]['time_fun']
         data = np.append(
             data,
             np.array(operation(df_tmp.shape[0] if count_row else df_tmp))
         )
+
     return data
 
 
