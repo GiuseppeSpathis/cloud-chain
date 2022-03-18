@@ -6,9 +6,11 @@ from settings import SIMULATION_TIME
 from utility import processing, truncate_length, extract_smooth_graph
 
 
-def response_time_blockchain(df: pd.DataFrame, operation) -> {}:
+def response_time_blockchain(df: pd.DataFrame, operation, all_metrics: bool = False) -> {}:
     data = processing(df, operation)
-    return mu_confidence_interval(data)
+    if all_metrics:
+        return mu_confidence_interval(data)
+    return mu_confidence_interval(data)['mu']
 
 
 def mu_confidence_interval(data: np.ndarray) -> {}:
@@ -27,17 +29,21 @@ def mu_confidence_interval(data: np.ndarray) -> {}:
     }
 
 
-def number_users_system(df: pd.DataFrame) -> {}:
+def number_users_system(df: pd.DataFrame, all_metrics: bool = False) -> {}:
     throughput = processing(df, np.array, count_row=True)
     throughput /= SIMULATION_TIME
     avg_response_time = processing(df, np.mean)
     users_number = throughput * avg_response_time
-    return mu_confidence_interval(users_number)
+    if all_metrics:
+        return mu_confidence_interval(users_number)
+    return mu_confidence_interval(users_number)['mu']
 
 
-def mean_error(df: pd.DataFrame) -> {}:
+def mean_error(df: pd.DataFrame, all_metrics: bool = False) -> {}:
     errors = processing(df, np.array, count_row=True)
-    return mu_confidence_interval(errors)
+    if all_metrics:
+        return mu_confidence_interval(errors)
+    return mu_confidence_interval(errors)['mu']
 
 
 def calculate_print_transient(df: pd.DataFrame, title: str) -> None:
