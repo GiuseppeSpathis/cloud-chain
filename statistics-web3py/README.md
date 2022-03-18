@@ -38,6 +38,6 @@ python main.py -h
 
 | Blokchain | Consensus mechanisms        | Interarrival time Poisson (λ) |
 | :--- |:----------------------------|:--- |
-| GoQuorum | instanbul, qbft, raft | 2.0, 1, 0.5 |
+| GoQuorum | instanbul, qbft, raft | 2.0, 1.0, 0.5 |
 | Hyperledger Besu | QBFT, IBFT, CLIQUE | 2.0, 1.0, 0.5 |
 | Polygon | IBFT, PoS | 2.0, 1.0, 0.5 |
