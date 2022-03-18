@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```python
-python experiment [-t]
+python [-e EXPERIMENT] [-t]
 ```
 
 To know the allowed parameters use
@@ -38,6 +38,6 @@ python main.py -h
 
 | Blokchain | Consensus mechanisms        | Interarrival time Poisson (λ) |
 | :--- |:----------------------------|:--- |
-| GoQuorum | instanbul, qbft, raft | 2, 1, 1/2 |
-| Hyperledger Besu | QBFT, IBFT, CLIQUE | 2, 1, 1/2 |
-| Polygon | IBFT, PoS | 2, 1, 1/2 |
+| GoQuorum | instanbul, qbft, raft | 2.0, 1, 0.5 |
+| Hyperledger Besu | QBFT, IBFT, CLIQUE | 2.0, 1.0, 0.5 |
+| Polygon | IBFT, PoS | 2.0, 1.0, 0.5 |
