@@ -25,7 +25,7 @@ pip install -r requirements.txt
 ## Usage
 
 ```python
-python [-e EXPERIMENT] [-t]
+python main.py [-e EXPERIMENT] [-t]
 ```
 
 To know the allowed parameters use
