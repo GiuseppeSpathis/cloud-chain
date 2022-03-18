@@ -5,21 +5,36 @@ import numpy as np
 import pandas as pd
 
 
-def experiment_path(transient: bool, experiment: str) -> Template:
+def phase_path(transient: bool) -> str:
     if transient:
         from settings import TRANSIENT_PATH
-        phase_path = TRANSIENT_PATH
-    else:
-        from settings import STEADY_STATE_PATH
-        phase_path = STEADY_STATE_PATH
-    return Template(f'{phase_path}\\{experiment}\\$folder')
+        return TRANSIENT_PATH
+    from settings import STEADY_STATE_PATH
+    return STEADY_STATE_PATH
+
+
+def experiment_path(experiment: str, path: str) -> ():
+    if experiment == 'none':
+        exp_paths = []
+        for exp in os.listdir(path):
+            dir_path = f'{path}/{exp}'
+            if os.path.isdir(dir_path):
+                exp_paths.append(
+                    Template(f'{dir_path}/$fn')
+                )
+        return True, exp_paths
+
+    single_exp = f'{path}/{experiment}'
+    if os.path.isdir(single_exp):
+        return True, [Template(f'{single_exp}/$fn')]
+    return False, []
 
 
 def read_csv(path: Template, functions: []) -> {}:
     dict_df = {}
     for fn in functions:
         dict_df[fn] = []
-        function_path = path.substitute(folder=fn)
+        function_path = path.substitute(fn=fn)
         for filename in os.listdir(function_path):
             dict_df[fn].append(
                 pd.read_csv(os.path.join(function_path, filename))

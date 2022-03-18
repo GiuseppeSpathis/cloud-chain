@@ -1,8 +1,9 @@
 from string import Template
 
 SIMULATION_TIME = 300
+TRANSIENT_VALUE = 50.
 
-_RESULTS_PHASE_PATH = Template('..\\simulation-web3py\\results\\$phase')
+_RESULTS_PHASE_PATH = Template('../simulation-web3py/results/$phase')
 TRANSIENT_PATH = _RESULTS_PHASE_PATH.substitute(phase='transient_200_15')
 STEADY_STATE_PATH = _RESULTS_PHASE_PATH.substitute(phase='steady_state_600_5')
 
@@ -20,7 +21,7 @@ lambdas = [
     2.0
 ]
 
-folders = [
+experiments = [
     'polygon_pos_4',
     'polygon_ibft_4',
     'besu_qbft_4',
