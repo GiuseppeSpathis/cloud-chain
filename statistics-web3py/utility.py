@@ -51,6 +51,10 @@ def filter_lambda_status(df: pd.DataFrame, lambda_p: float, status: bool = True)
     return df[(df['lambda'] == lambda_p) & (df['status'] == status)]
 
 
+def filter_fn_lambda(df: pd.DataFrame, fn: str, lambda_p: float) -> pd.DataFrame:
+    return df[(df['fn'] == fn) & (df['lambda'] == lambda_p)]
+
+
 def filter_transient_time(df: pd.DataFrame, time: np.float64) -> pd.DataFrame:
     return df[df['start_fun'] > time]
 
