@@ -6,11 +6,9 @@ from settings import SIMULATION_TIME
 from utility import processing, truncate_length, extract_smooth_graph
 
 
-def response_time_blockchain(df: pd.DataFrame, operation, all_metrics: bool = False) -> {}:
+def response_time_blockchain(df: pd.DataFrame, operation) -> {}:
     data = processing(df, operation)
-    if all_metrics:
-        return mu_confidence_interval(data)
-    return mu_confidence_interval(data)['mu']
+    return mu_confidence_interval(data)
 
 
 def mu_confidence_interval(data: np.ndarray) -> {}:
@@ -29,21 +27,19 @@ def mu_confidence_interval(data: np.ndarray) -> {}:
     }
 
 
-def number_users_system(df: pd.DataFrame, all_metrics: bool = False) -> {}:
+def number_users_system(df: pd.DataFrame) -> {}:
     throughput = processing(df, np.array, count_row=True)
     throughput /= SIMULATION_TIME
     avg_response_time = processing(df, np.mean)
     users_number = throughput * avg_response_time
-    if all_metrics:
-        return mu_confidence_interval(users_number)
-    return mu_confidence_interval(users_number)['mu']
+    return mu_confidence_interval(users_number)
 
 
-def mean_error(df: pd.DataFrame, all_metrics: bool = False) -> {}:
-    errors = processing(df, np.array, count_row=True)
-    if all_metrics:
-        return mu_confidence_interval(errors)
-    return mu_confidence_interval(errors)['mu']
+def mean_error(df_all: pd.DataFrame, df_error: pd.DataFrame) -> {}:
+    errors = processing(df_error, np.array, count_row=True)
+    totals = processing(df_all, np.array, count_row=True)
+    percentage_error = errors / totals * 100
+    return mu_confidence_interval(percentage_error)
 
 
 def calculate_print_transient(df: pd.DataFrame, title: str) -> None:

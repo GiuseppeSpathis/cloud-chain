@@ -26,44 +26,66 @@ def main():
                     # print(f"\n{exp_name.upper()} - {fn.upper()} - {lambda_p}")
 
                     df_truncated = filter_transient_time(df_filter, np.float64(TRANSIENT_VALUE))
-                    avg_mu = response_time_blockchain(df_truncated, np.mean)
-                    min_mu = response_time_blockchain(df_truncated, np.min)
-                    max_mu = response_time_blockchain(df_truncated, np.max)
-                    median_mu = response_time_blockchain(df_truncated, np.median)
-                    num_user_mu = number_users_system(df_truncated)
+
+                    avg = response_time_blockchain(df_truncated, np.mean)
+                    _min = response_time_blockchain(df_truncated, np.min)
+                    _max = response_time_blockchain(df_truncated, np.max)
+                    median = response_time_blockchain(df_truncated, np.median)
+                    num_user = number_users_system(df_truncated)
 
                     df_error = filter_lambda_status(df_fn, lambda_p, status=False)
                     if df_error.shape[0] == 0:
-                        error_mu = np.float64(0)
+                        error = {
+                            'mu': np.float64(0),
+                            't_student': np.float64(0)
+                        }
                     else:
-                        error_mu = mean_error(df_error)
+                        error = mean_error(df_filter, df_error)
 
                     exp_mod = exp_name.rsplit('_', 1)[0].replace('_', '\n')
                     df = pd.DataFrame({
                         'fn': [fn],
-                        'exp': [exp_mod],
+                        'exp': [exp_name],
+                        'exp_plot': [exp_mod],
                         'lambda': [lambda_p],
-                        'avg': [avg_mu],
-                        'min': [min_mu],
-                        'max': [max_mu],
-                        'median': [median_mu],
-                        'num_user': [num_user_mu],
-                        'mean_error': [error_mu]
+                        'avg': [avg['mu']],
+                        'avg_t_student': [avg['t_student']],
+                        'min': [_min['mu']],
+                        'min_t_student': [_min['t_student']],
+                        'max': [_max['mu']],
+                        'max_t_student': [_max['t_student']],
+                        'median': [median['mu']],
+                        'median_t_student': [median['t_student']],
+                        'num_user': [num_user['mu']],
+                        'num_user_t_student': [num_user['t_student']],
+                        'mean_error': [error['mu']],
+                        'mean_error_t_student': [error['t_student']]
                     })
                     metrics_df = pd.concat([metrics_df, df], ignore_index=True)
+    '''
+    for fn in functions:
+        for lambda_p in lambdas:
+            title = f'{fn} - lambda {lambda_p}'
+            df = filter_fn_lambda(metrics_df, fn, lambda_p)x
+            df.plot(
+                kind='bar',
+                title=title,
+                x='exp_plot',
+                y=['min', 'median', 'avg', 'max'],
+                rot=0,
+                figsize=(8, 8)
+            )
+            plt.xlabel('')
+            plt.ylabel('time (s)')
+            # plt.show()
+            '''
+    for exp in exp_paths:
+        dict_df = read_csv(exp, iter_functions)
+        for fn in iter_functions:
+            df_fn = extract_data_function(dict_df, fn)
+            for lambda_p in lambdas:
+                df_fn[fn] = fn
 
-    df = filter_fn_lambda(metrics_df, 'upload', 2.0)
-    y_args = list(df.columns)[3:]
-    df.plot(
-        kind='bar',
-        title='Test title',
-        x='exp',
-        y=y_args,
-        rot=0
-    )
-    plt.xlabel('')
-    plt.ylabel('time (s)')
-    plt.show()
 
 
 if __name__ == '__main__':

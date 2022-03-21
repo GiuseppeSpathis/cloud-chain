@@ -61,7 +61,7 @@ def filter_transient_time(df: pd.DataFrame, time: np.float64) -> pd.DataFrame:
 
 def processing(df: pd.DataFrame, operation, count_row: bool = False) -> np.ndarray:
     data = np.array([])
-    num_repetition = df['num_run'].unique()
+    num_repetition = range(5) if count_row else df['num_run'].unique()
     for num_run in num_repetition:
         df_tmp = df[df['num_run'] == num_run]['time_fun']
         data = np.append(
