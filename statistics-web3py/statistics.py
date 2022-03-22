@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-from settings import SIMULATION_TIME
-from utility import processing, truncate_length, extract_smooth_graph
+from settings import SIMULATION_TIME, PLOT_DIR
+from utility import processing, truncate_length, extract_smooth_graph, exists_dir, join_paths
 
 
 def response_time_blockchain(df: pd.DataFrame, operation) -> {}:
@@ -36,13 +36,19 @@ def number_users_system(df: pd.DataFrame) -> {}:
 
 
 def mean_error(df_all: pd.DataFrame, df_error: pd.DataFrame) -> {}:
+    if df_error.shape[0] == 0:
+        return {
+            'mu': np.float64(0),
+            't_student': np.float64(0)
+        }
+
     errors = processing(df_error, np.array, count_row=True)
     totals = processing(df_all, np.array, count_row=True)
     percentage_error = errors / totals * 100
     return mu_confidence_interval(percentage_error)
 
 
-def calculate_print_transient(df: pd.DataFrame, title: str) -> None:
+def calculate_plot_transient(df: pd.DataFrame, title: str) -> None:
     def _dark_subplots() -> tuple:
         plt.style.use('dark_background')
         figure, axes = plt.subplots()
@@ -71,3 +77,47 @@ def calculate_print_transient(df: pd.DataFrame, title: str) -> None:
     plt.xlabel('# user')
     plt.ylabel('time (s)')
     plt.show()
+
+
+def bar_plot_metrics(df: pd.DataFrame, labels: [], title: str, save: bool = False) -> None:
+    x = np.arange(len(labels))
+    width = 0.1
+
+    fig, ax = plt.subplots(figsize=(16, 10))
+
+    rs = [x]
+    for idx in range(1, 6):
+        tmp = rs[idx - 1]
+        rs.append(
+            [val + width for val in tmp]
+        )
+
+    rects = []
+    for idx, exp in enumerate(df['exp'].unique()):
+        metric_series = df[df['exp'] == exp][labels].iloc[0]
+        rects.append(
+            ax.bar(rs[idx], metric_series, width, label=exp)
+        )
+
+    ax.set_title(title)
+    ax.set_ylabel('time (s)')
+
+    y_max = df['max'].max() + 2.5
+    ax.set_ylim(ymin=0, ymax=y_max)
+
+    loc_ticks = [(val + (len(rects) / 2) * width) - width / 2 for val in range(len(rects[0]))]
+    upper_labels = [val.upper() for val in labels]
+    ax.set_xticks(loc_ticks, upper_labels)
+    ax.legend(loc='upper left')
+
+    for rect in rects:
+        ax.bar_label(rect, padding=2, rotation='vertical')
+
+    fig.tight_layout()
+
+    if save:
+        exists_dir(PLOT_DIR)
+        figure_path = join_paths(PLOT_DIR, f'{title}.png')
+        plt.savefig(figure_path)
+    else:
+        plt.show()

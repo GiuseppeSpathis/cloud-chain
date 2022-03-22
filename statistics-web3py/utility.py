@@ -5,6 +5,15 @@ import numpy as np
 import pandas as pd
 
 
+def exists_dir(path: str):
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+
+def join_paths(first_path: str, second_path: str):
+    return os.path.join(first_path, second_path)
+
+
 def phase_path(transient: bool) -> str:
     if transient:
         from settings import TRANSIENT_PATH
