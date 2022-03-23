@@ -5,7 +5,7 @@ import pandas as pd
 
 from settings import experiments, lambdas, functions, TRANSIENT_VALUE, RESULT_DIR
 from statistics import response_time_blockchain, number_users_system, calculate_plot_transient, mean_error, \
-    bar_plot_metrics
+    bar_plot_metrics, bar_plot_metrics_one
 from utility import read_csv, extract_data_function, filter_lambda_status, phase_path, experiment_path, \
     filter_transient_time, filter_fn_lambda, exists_dir, join_paths
 
@@ -94,20 +94,24 @@ def main():
 
     if not args.transient:
         if args.experiment == 'none':
-            for fn in functions:
-                for lambda_p in lambdas:
+            for lambda_p in lambdas:
+                df_filter_lambda = df_metrics[df_metrics['lambda'] == lambda_p]
+                title = f'lambda {lambda_p}'
+                bar_plot_metrics_one(df_filter_lambda, functions, title, 'fn', args.save)
+                exit(1)
+                for fn in functions:
                     df_filter = filter_fn_lambda(df_metrics, fn, lambda_p)
                     df_rounded = df_filter.round(2)
                     df = df_rounded.sort_values('avg')
-
                     title = f'{fn} - lambda {lambda_p}'
                     labels = ['min', 'avg', 'median', 'max']
                     bar_plot_metrics(df, labels, title, 'exp', args.save)
-        else:
-            if args.view == 'fn':
-                different_view(df_metrics, lambdas, 'lambda')
-            elif args.view == 'lambda':
-                different_view(df_metrics, functions, 'fn')
+
+    else:
+        if args.view == 'fn':
+            different_view(df_metrics, lambdas, 'lambda')
+        elif args.view == 'lambda':
+            different_view(df_metrics, functions, 'fn')
 
     if args.save:
         exists_dir(RESULT_DIR)

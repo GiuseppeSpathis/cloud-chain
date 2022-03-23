@@ -92,10 +92,60 @@ def bar_plot_metrics(df: pd.DataFrame, labels: [], title: str, column: str, save
         rs.append(
             [val + width for val in tmp]
         )
-
+    print(len(rs))
     rects = []
     for idx, val in enumerate(df[column].unique()):
         metric_series = df[df[column] == val][labels].iloc[0]
+        print(metric_series)
+        exit(1)
+        rects.append(
+            ax.bar(rs[idx], metric_series, width, label=val)
+        )
+
+    ax.set_title(title, fontsize=24)
+    ax.set_ylabel('Time (s)')
+
+    y_max = df['max'].max() + 2.5
+    ax.set_ylim(ymin=0, ymax=y_max)
+
+    loc_ticks = [(val + (len(rects) / 2) * width) - width / 2 for val in range(len(rects[0]))]
+    upper_labels = [val.upper() for val in labels]
+    ax.set_xticks(loc_ticks, upper_labels)
+    ax.legend(loc='upper left')
+
+    for rect in rects:
+        ax.bar_label(rect, padding=3, rotation='vertical')
+
+    fig.tight_layout()
+
+    if save:
+        exists_dir(PLOT_DIR)
+        figure_path = join_paths(PLOT_DIR, f'{title}.png')
+        plt.savefig(figure_path)
+    else:
+        plt.show()
+
+
+def bar_plot_metrics_one(df: pd.DataFrame, labels: [], title: str, column: str, save: bool = False) -> None:
+    x = np.arange(len(labels))
+    width = 0.1
+
+    fig, ax = plt.subplots(figsize=(16, 10))
+
+    rs = [x]
+    for idx in range(1, df['exp'].unique().shape[0]):
+        tmp = rs[idx - 1]
+        rs.append(
+            [val + width for val in tmp]
+        )
+    print(f'rs: {rs}')
+
+    # print(f'df:{df[df["exp"]=="besu_ibft_4"]["mean_error"]}')
+    #print(df['exp'].unique())
+    rects = []
+    for idx, val in enumerate(df['exp'].unique()):
+        metric_series = pd.Series(df[df['exp'] == val]['num_user'])
+        print(metric_series)
         rects.append(
             ax.bar(rs[idx], metric_series, width, label=val)
         )
