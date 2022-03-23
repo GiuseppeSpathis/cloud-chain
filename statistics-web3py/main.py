@@ -42,7 +42,7 @@ def metrics_dataframe() -> pd.DataFrame:
             for lambda_p in lambdas:
                 df_filter = filter_lambda_status(df_fn, lambda_p)
                 if args.transient:
-                    calculate_plot_transient(df_filter, f'{args.experiment[:-2]} - lambda {lambda_p}')
+                    calculate_plot_transient(df_filter, f'{exp_name} - lambda {lambda_p}', args.save)
                 else:
                     df_truncated = filter_transient_time(df_filter, np.float64(TRANSIENT_VALUE))
 
@@ -78,20 +78,36 @@ def metrics_dataframe() -> pd.DataFrame:
     return df_metrics
 
 
+def different_view(df_metrics: pd.DataFrame, iter_list: [], column: str) -> None:
+    for elm in iter_list:
+        df_filter = df_metrics[df_metrics[column] == elm]
+        df_rounded = df_filter.round(2)
+        df = df_rounded.sort_values('avg')
+
+        title = f'{args.experiment} - {elm}' if column == 'fn' else f'{args.experiment} - {elm}'
+        labels = ['min', 'avg', 'median', 'max']
+        bar_plot_metrics(df, labels, title, args.view, args.save)
+
+
 def main():
     df_metrics = metrics_dataframe()
-    # df_join = join_dataframe()
 
     if not args.transient:
-        for fn in functions:
-            for lambda_p in lambdas:
-                df_filter = filter_fn_lambda(df_metrics, fn, lambda_p)
-                df_rounded = df_filter.round(2)
-                df = df_rounded.sort_values('avg')
+        if args.experiment == 'none':
+            for fn in functions:
+                for lambda_p in lambdas:
+                    df_filter = filter_fn_lambda(df_metrics, fn, lambda_p)
+                    df_rounded = df_filter.round(2)
+                    df = df_rounded.sort_values('avg')
 
-                title = f'{fn} - lambda {lambda_p}'
-                labels = ['min', 'avg', 'median', 'max']
-                bar_plot_metrics(df, labels, title, args.save)
+                    title = f'{fn} - lambda {lambda_p}'
+                    labels = ['min', 'avg', 'median', 'max']
+                    bar_plot_metrics(df, labels, title, 'exp', args.save)
+        else:
+            if args.view == 'fn':
+                different_view(df_metrics, lambdas, 'lambda')
+            elif args.view == 'lambda':
+                different_view(df_metrics, functions, 'fn')
 
     if args.save:
         exists_dir(RESULT_DIR)
@@ -102,12 +118,17 @@ def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Statistics analysis of web3py project.',
-        usage='%(prog)s [-e EXPERIMENT] [-t] [-s]'
+        usage='%(prog)s [-e EXPERIMENT [-v VIEW]] [-t] [-s]'
     )
     parser.add_argument(
         '-e', '--experiment', default='none', type=str,
         choices=experiments,
         help='the name of the folder that contains the results of a simulation'
+    )
+    parser.add_argument(
+        '-v', '--view', default='fn', type=str,
+        choices=['lambda', 'fn'],
+        help='the comparison between the same function or the same lambda'
     )
     parser.add_argument(
         '-t', '--transient', default=False,

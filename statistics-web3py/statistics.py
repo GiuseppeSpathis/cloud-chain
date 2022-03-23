@@ -1,9 +1,12 @@
 import numpy as np
 import pandas as pd
+import matplotlib as mpl
 from matplotlib import pyplot as plt
 
 from settings import SIMULATION_TIME, PLOT_DIR
 from utility import processing, truncate_length, extract_smooth_graph, exists_dir, join_paths
+
+mpl.rc('figure', max_open_warning=0)
 
 
 def response_time_blockchain(df: pd.DataFrame, operation) -> {}:
@@ -48,15 +51,7 @@ def mean_error(df_all: pd.DataFrame, df_error: pd.DataFrame) -> {}:
     return mu_confidence_interval(percentage_error)
 
 
-def calculate_plot_transient(df: pd.DataFrame, title: str) -> None:
-    def _dark_subplots() -> tuple:
-        plt.style.use('dark_background')
-        figure, axes = plt.subplots()
-        figure.patch.set_facecolor('#252526')
-        axes.set_facecolor('#3c3c3c')
-
-        return figure, axes
-
+def calculate_plot_transient(df: pd.DataFrame, title: str, save: bool = False) -> None:
     num_repetition = len(df.groupby('num_run'))
     min_length = truncate_length(df, num_repetition)
 
@@ -71,36 +66,42 @@ def calculate_plot_transient(df: pd.DataFrame, title: str) -> None:
 
     smooth_data = extract_smooth_graph(means)
 
-    fig, ax = _dark_subplots()
-    fig.suptitle(title, fontsize=15)
+    fig, ax = plt.subplots()
+    ax.set_title(title, fontsize=18)
     ax.plot(smooth_data[:60])
-    plt.xlabel('# user')
-    plt.ylabel('time (s)')
-    plt.show()
+    plt.xlabel('# User')
+    plt.ylabel('Time (s)')
+
+    if save:
+        exists_dir(PLOT_DIR)
+        figure_path = join_paths(PLOT_DIR, f'transient_{title}.png')
+        plt.savefig(figure_path)
+    else:
+        plt.show()
 
 
-def bar_plot_metrics(df: pd.DataFrame, labels: [], title: str, save: bool = False) -> None:
+def bar_plot_metrics(df: pd.DataFrame, labels: [], title: str, column: str, save: bool = False) -> None:
     x = np.arange(len(labels))
     width = 0.1
 
     fig, ax = plt.subplots(figsize=(16, 10))
 
     rs = [x]
-    for idx in range(1, 6):
+    for idx in range(1, df[column].unique().shape[0]):
         tmp = rs[idx - 1]
         rs.append(
             [val + width for val in tmp]
         )
 
     rects = []
-    for idx, exp in enumerate(df['exp'].unique()):
-        metric_series = df[df['exp'] == exp][labels].iloc[0]
+    for idx, val in enumerate(df[column].unique()):
+        metric_series = df[df[column] == val][labels].iloc[0]
         rects.append(
-            ax.bar(rs[idx], metric_series, width, label=exp)
+            ax.bar(rs[idx], metric_series, width, label=val)
         )
 
-    ax.set_title(title)
-    ax.set_ylabel('time (s)')
+    ax.set_title(title, fontsize=24)
+    ax.set_ylabel('Time (s)')
 
     y_max = df['max'].max() + 2.5
     ax.set_ylim(ymin=0, ymax=y_max)
@@ -111,7 +112,7 @@ def bar_plot_metrics(df: pd.DataFrame, labels: [], title: str, save: bool = Fals
     ax.legend(loc='upper left')
 
     for rect in rects:
-        ax.bar_label(rect, padding=2, rotation='vertical')
+        ax.bar_label(rect, padding=3, rotation='vertical')
 
     fig.tight_layout()
 
