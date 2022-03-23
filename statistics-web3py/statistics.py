@@ -150,12 +150,15 @@ def bar_plot_one_metric(df: pd.DataFrame, labels: [], metric: str, title: str, s
             ax.bar(rs[idx], metric_series, width, label=val)
         )
 
-    ax.set_title(title, fontsize=24)
-    ax.set_ylabel('Time (s)')
     if metric == 'mean_error':
-        y_max = 100
+        y_label = '%'
+        y_max = df[metric].max() + 2
     else:
+        y_label = 'Number of user'
         y_max = df[metric].max() + 7.5
+
+    ax.set_title(title, fontsize=24)
+    ax.set_ylabel(y_label)
     ax.set_ylim(ymin=0, ymax=y_max)
 
     loc_ticks = [(val + (len(rects) / 2) * width) - width / 2 for val in range(len(rects[0]))]
