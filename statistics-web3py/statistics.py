@@ -51,7 +51,7 @@ def mean_error(df_all: pd.DataFrame, df_error: pd.DataFrame) -> {}:
     return mu_confidence_interval(percentage_error)
 
 
-def calculate_transient(df: pd.DataFrame) -> []:
+def calculate_transient(df: pd.DataFrame) -> np.ndarray:
     num_repetition = len(df.groupby('num_run'))
     min_length = truncate_length(df, num_repetition)
 
@@ -68,7 +68,7 @@ def calculate_transient(df: pd.DataFrame) -> []:
     return smooth_data
 
 
-def print_transient(title: str, df: pd.DataFrame, save: bool = False):
+def plot_transient(df: pd.DataFrame, title: str, save: bool = False) -> None:
     fig, ax = plt.subplots(figsize=(16, 10))
     ax.set_title(title, fontsize=24)
     for idx in range(df.shape[0]):

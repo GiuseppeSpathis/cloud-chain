@@ -5,7 +5,7 @@ import pandas as pd
 
 from settings import experiments, lambdas, functions, TRANSIENT_VALUE, RESULT_DIR
 from statistics import response_time_blockchain, number_users_system, calculate_transient, mean_error, \
-    bar_plot_metrics, bar_plot_one_metric, print_transient
+    bar_plot_metrics, bar_plot_one_metric, plot_transient
 from utility import read_csv, extract_data_function, filter_lambda_status, phase_path, experiment_path, \
     filter_transient_time, filter_fn_lambda, exists_dir, join_paths
 
@@ -124,7 +124,9 @@ def main():
     else:
         for exp in experiments:
             df_filter = df_metrics[df_metrics['exp'] == exp]
-            print_transient(f'Transient of {exp}', df_filter, args.save)
+            title = f'Transient of {exp}'
+            plot_transient(df_filter, title, args.save)
+
     if args.save:
         exists_dir(RESULT_DIR)
         csv_path = join_paths(RESULT_DIR, 'metrics.csv')
