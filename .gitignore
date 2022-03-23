@@ -4,7 +4,6 @@
 **/polygon/staking-contracts
 **/simulation-web3py/__pycache__
 **/simulation-web3py/config
-**/simulation-web3py/results/*
 **/simulation-web3py/.pytest_cache
 **/statistics-web3py/__pycache__
 **/statistics-web3py/.pytest_cache
