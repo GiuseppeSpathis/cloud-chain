@@ -131,7 +131,9 @@ def main():
 
     if args.save:
         exists_dir(RESULT_DIR)
-        csv_path = join_paths(RESULT_DIR, 'metrics.csv')
+        suffix = 'transient' if args.transient else 'steady_state'
+        filename = f'{suffix}_metrics.csv'
+        csv_path = join_paths(RESULT_DIR, filename)
         df_metrics.to_csv(csv_path, index=False, encoding='utf-8')
 
 
