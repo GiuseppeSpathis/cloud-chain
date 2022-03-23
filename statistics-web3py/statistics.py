@@ -51,7 +51,7 @@ def mean_error(df_all: pd.DataFrame, df_error: pd.DataFrame) -> {}:
     return mu_confidence_interval(percentage_error)
 
 
-def calculate_plot_transient(df: pd.DataFrame, title: str, save: bool = False) -> None:
+def calculate_transient(df: pd.DataFrame) -> []:
     num_repetition = len(df.groupby('num_run'))
     min_length = truncate_length(df, num_repetition)
 
@@ -65,10 +65,15 @@ def calculate_plot_transient(df: pd.DataFrame, title: str, save: bool = False) -
         means[idx] = sums[idx] / num_repetition
 
     smooth_data = extract_smooth_graph(means)
+    return smooth_data
 
+
+def print_transient(title: str, df: pd.DataFrame, save: bool = False):
     fig, ax = plt.subplots(figsize=(16, 10))
     ax.set_title(title, fontsize=24)
-    ax.plot(smooth_data[:60])
+    for idx in range(df.shape[0]):
+        ax.plot(df['transient'].iloc[idx][:60], label=df['lambda'].iloc[idx])
+    ax.legend(loc='upper left')
     plt.xlabel('Number of user')
     plt.ylabel('Time (s)')
     plt.grid()

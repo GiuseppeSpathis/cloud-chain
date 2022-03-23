@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 
 from settings import experiments, lambdas, functions, TRANSIENT_VALUE, RESULT_DIR
-from statistics import response_time_blockchain, number_users_system, calculate_plot_transient, mean_error, \
-    bar_plot_metrics, bar_plot_one_metric
+from statistics import response_time_blockchain, number_users_system, calculate_transient, mean_error, \
+    bar_plot_metrics, bar_plot_one_metric, print_transient
 from utility import read_csv, extract_data_function, filter_lambda_status, phase_path, experiment_path, \
     filter_transient_time, filter_fn_lambda, exists_dir, join_paths
 
@@ -42,7 +42,14 @@ def metrics_dataframe() -> pd.DataFrame:
             for lambda_p in lambdas:
                 df_filter = filter_lambda_status(df_fn, lambda_p)
                 if args.transient:
-                    calculate_plot_transient(df_filter, f'Transient of {exp_name} - lambda {lambda_p}', args.save)
+                    transient = calculate_transient(df_filter)
+                    df = pd.DataFrame({
+                        'exp': [exp_name],
+                        'exp_plot': [exp_mod],
+                        'lambda': [lambda_p],
+                        'transient': [transient]
+                    })
+                    df_metrics = pd.concat([df_metrics, df], ignore_index=True)
                 else:
                     df_truncated = filter_transient_time(df_filter, np.float64(TRANSIENT_VALUE))
 
@@ -114,7 +121,10 @@ def main():
                 different_view(df_metrics, lambdas, 'lambda')
             elif args.view == 'lambda':
                 different_view(df_metrics, functions, 'fn')
-
+    else:
+        for exp in experiments:
+            df_filter = df_metrics[df_metrics['exp'] == exp]
+            print_transient(f'Transient of {exp}', df_filter, args.save)
     if args.save:
         exists_dir(RESULT_DIR)
         csv_path = join_paths(RESULT_DIR, 'metrics.csv')
