@@ -53,8 +53,8 @@ def metrics_dataframe() -> pd.DataFrame:
                     num_user = number_users_system(df_truncated)
 
                     df_error = filter_lambda_status(df_fn, lambda_p, status=False)
-                    error = mean_error(df_filter, df_error)
-
+                    df_all = pd.concat([df_filter, df_error], ignore_index=True)
+                    error = mean_error(df_all, df_error)
                     df = pd.DataFrame({
                         'fn': [fn],
                         'exp': [exp_name],
@@ -97,10 +97,10 @@ def main():
             for lambda_p in lambdas:
                 df_filter_lambda = df_metrics[df_metrics['lambda'] == lambda_p]
                 df_rounded_lambda = df_filter_lambda.round(0)
-
-                metric = 'mean_error'
-                title = f'{metric} - lambda {lambda_p}'
-                bar_plot_one_metric(df_rounded_lambda, functions, metric, title, args.save)
+                title = f'Percentage error all functions - lambda {lambda_p}'
+                bar_plot_one_metric(df_rounded_lambda, functions, 'mean_error', title, args.save)
+                title = f'Number of users for all functions - lambda {lambda_p}'
+                bar_plot_one_metric(df_rounded_lambda, functions, 'num_user', title, args.save)
 
                 for fn in functions:
                     df_filter = filter_fn_lambda(df_metrics, fn, lambda_p)

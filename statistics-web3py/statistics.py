@@ -146,8 +146,10 @@ def bar_plot_one_metric(df: pd.DataFrame, labels: [], metric: str, title: str, s
 
     ax.set_title(title, fontsize=24)
     ax.set_ylabel('Time (s)')
-
-    y_max = df[metric].max() + 7.5
+    if metric == 'mean_error':
+        y_max = 100
+    else:
+        y_max = df[metric].max() + 7.5
     ax.set_ylim(ymin=0, ymax=y_max)
 
     loc_ticks = [(val + (len(rects) / 2) * width) - width / 2 for val in range(len(rects[0]))]
