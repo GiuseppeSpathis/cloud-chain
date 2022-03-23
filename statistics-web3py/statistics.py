@@ -68,14 +68,19 @@ def calculate_transient(df: pd.DataFrame) -> np.ndarray:
     return smooth_data
 
 
-def plot_transient(df: pd.DataFrame, title: str, save: bool = False) -> None:
+def plot_transient(df: pd.DataFrame, experiments: [], title: str, save: bool = False) -> None:
     fig, ax = plt.subplots(figsize=(16, 10))
     ax.set_title(title, fontsize=24)
+
+    df = df[df['exp'].isin(experiments)]
+
     for idx in range(df.shape[0]):
-        ax.plot(df['transient'].iloc[idx][:60], label=df['lambda'].iloc[idx])
+        ax.plot(df['transient'].iloc[idx][:60], label=df['exp'].iloc[idx])
+
     ax.legend(loc='upper left')
     plt.xlabel('Number of user')
     plt.ylabel('Time (s)')
+    plt.yscale('log')
     plt.grid()
 
     if save:

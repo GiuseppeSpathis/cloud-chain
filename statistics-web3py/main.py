@@ -122,10 +122,12 @@ def main():
             elif args.view == 'lambda':
                 different_view(df_metrics, functions, 'fn')
     else:
-        for exp in experiments:
-            df_filter = df_metrics[df_metrics['exp'] == exp]
-            title = f'Transient of {exp}'
-            plot_transient(df_filter, title, args.save)
+        exp_group = ['besu_ibft_4', 'go-quorum_ibft_4', 'polygon_ibft_4']
+
+        for lambda_p in lambdas:
+            df_filter = df_metrics[df_metrics['lambda'] == lambda_p]
+            title = f'Transient with lambda {lambda_p}'
+            plot_transient(df_filter, exp_group, title, args.save)
 
     if args.save:
         exists_dir(RESULT_DIR)
