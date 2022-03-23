@@ -42,7 +42,7 @@ def metrics_dataframe() -> pd.DataFrame:
             for lambda_p in lambdas:
                 df_filter = filter_lambda_status(df_fn, lambda_p)
                 if args.transient:
-                    calculate_plot_transient(df_filter, f'{exp_name} - lambda {lambda_p}', args.save)
+                    calculate_plot_transient(df_filter, f'Transient of {exp_name} - lambda {lambda_p}', args.save)
                 else:
                     df_truncated = filter_transient_time(df_filter, np.float64(TRANSIENT_VALUE))
 
@@ -109,12 +109,11 @@ def main():
                     title = f'{fn} - lambda {lambda_p}'
                     labels = ['min', 'avg', 'median', 'max']
                     bar_plot_metrics(df, labels, title, 'exp', args.save)
-
-    else:
-        if args.view == 'fn':
-            different_view(df_metrics, lambdas, 'lambda')
-        elif args.view == 'lambda':
-            different_view(df_metrics, functions, 'fn')
+        else:
+            if args.view == 'fn':
+                different_view(df_metrics, lambdas, 'lambda')
+            elif args.view == 'lambda':
+                different_view(df_metrics, functions, 'fn')
 
     if args.save:
         exists_dir(RESULT_DIR)

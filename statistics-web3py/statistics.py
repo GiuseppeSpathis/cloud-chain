@@ -66,15 +66,16 @@ def calculate_plot_transient(df: pd.DataFrame, title: str, save: bool = False) -
 
     smooth_data = extract_smooth_graph(means)
 
-    fig, ax = plt.subplots()
-    ax.set_title(title, fontsize=18)
+    fig, ax = plt.subplots(figsize=(16, 10))
+    ax.set_title(title, fontsize=24)
     ax.plot(smooth_data[:60])
-    plt.xlabel('# User')
+    plt.xlabel('Number of user')
     plt.ylabel('Time (s)')
+    plt.grid()
 
     if save:
         exists_dir(PLOT_DIR)
-        figure_path = join_paths(PLOT_DIR, f'transient_{title}.png')
+        figure_path = join_paths(PLOT_DIR, f'{title}.png')
         plt.savefig(figure_path)
     else:
         plt.show()
