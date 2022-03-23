@@ -96,7 +96,7 @@ def main():
         if args.experiment == 'none':
             for lambda_p in lambdas:
                 df_filter_lambda = df_metrics[df_metrics['lambda'] == lambda_p]
-                df_rounded_lambda = df_filter_lambda.round(0)
+                df_rounded_lambda = df_filter_lambda.round(1)
                 title = f'Percentage error all functions - lambda {lambda_p}'
                 bar_plot_one_metric(df_rounded_lambda, functions, 'mean_error', title, args.save)
                 title = f'Number of users for all functions - lambda {lambda_p}'
