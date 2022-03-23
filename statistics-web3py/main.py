@@ -5,7 +5,7 @@ import pandas as pd
 
 from settings import experiments, lambdas, functions, TRANSIENT_VALUE, RESULT_DIR
 from statistics import response_time_blockchain, number_users_system, calculate_plot_transient, mean_error, \
-    bar_plot_metrics, bar_plot_metrics_one
+    bar_plot_metrics, bar_plot_one_metric
 from utility import read_csv, extract_data_function, filter_lambda_status, phase_path, experiment_path, \
     filter_transient_time, filter_fn_lambda, exists_dir, join_paths
 
@@ -96,9 +96,12 @@ def main():
         if args.experiment == 'none':
             for lambda_p in lambdas:
                 df_filter_lambda = df_metrics[df_metrics['lambda'] == lambda_p]
-                title = f'lambda {lambda_p}'
-                bar_plot_metrics_one(df_filter_lambda, functions, title, 'fn', args.save)
-                exit(1)
+                df_rounded_lambda = df_filter_lambda.round(0)
+
+                metric = 'mean_error'
+                title = f'{metric} - lambda {lambda_p}'
+                bar_plot_one_metric(df_rounded_lambda, functions, metric, title, args.save)
+
                 for fn in functions:
                     df_filter = filter_fn_lambda(df_metrics, fn, lambda_p)
                     df_rounded = df_filter.round(2)

@@ -92,12 +92,10 @@ def bar_plot_metrics(df: pd.DataFrame, labels: [], title: str, column: str, save
         rs.append(
             [val + width for val in tmp]
         )
-    print(len(rs))
+
     rects = []
     for idx, val in enumerate(df[column].unique()):
         metric_series = df[df[column] == val][labels].iloc[0]
-        print(metric_series)
-        exit(1)
         rects.append(
             ax.bar(rs[idx], metric_series, width, label=val)
         )
@@ -126,7 +124,7 @@ def bar_plot_metrics(df: pd.DataFrame, labels: [], title: str, column: str, save
         plt.show()
 
 
-def bar_plot_metrics_one(df: pd.DataFrame, labels: [], title: str, column: str, save: bool = False) -> None:
+def bar_plot_one_metric(df: pd.DataFrame, labels: [], metric: str, title: str, save: bool = False) -> None:
     x = np.arange(len(labels))
     width = 0.1
 
@@ -138,14 +136,10 @@ def bar_plot_metrics_one(df: pd.DataFrame, labels: [], title: str, column: str, 
         rs.append(
             [val + width for val in tmp]
         )
-    print(f'rs: {rs}')
 
-    # print(f'df:{df[df["exp"]=="besu_ibft_4"]["mean_error"]}')
-    #print(df['exp'].unique())
     rects = []
     for idx, val in enumerate(df['exp'].unique()):
-        metric_series = pd.Series(df[df['exp'] == val]['num_user'])
-        print(metric_series)
+        metric_series = pd.Series(df[df['exp'] == val][metric])
         rects.append(
             ax.bar(rs[idx], metric_series, width, label=val)
         )
@@ -153,12 +147,11 @@ def bar_plot_metrics_one(df: pd.DataFrame, labels: [], title: str, column: str, 
     ax.set_title(title, fontsize=24)
     ax.set_ylabel('Time (s)')
 
-    y_max = df['max'].max() + 2.5
+    y_max = df[metric].max() + 7.5
     ax.set_ylim(ymin=0, ymax=y_max)
 
     loc_ticks = [(val + (len(rects) / 2) * width) - width / 2 for val in range(len(rects[0]))]
-    upper_labels = [val.upper() for val in labels]
-    ax.set_xticks(loc_ticks, upper_labels)
+    ax.set_xticks(loc_ticks, labels)
     ax.legend(loc='upper left')
 
     for rect in rects:
