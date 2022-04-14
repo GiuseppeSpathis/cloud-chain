@@ -1,5 +1,10 @@
-**/node_modules
-**/storage
-.env
-cloudchain.com+3.pem
-cloudchain.com+3-key.pem
+.idea
+**/polygon/polygon-network
+**/polygon/src
+**/polygon/staking-contracts
+**/simulation-web3py/__pycache__
+**/simulation-web3py/config
+**/simulation-web3py/.pytest_cache
+**/statistics-web3py/__pycache__
+**/statistics-web3py/.pytest_cache
+**/build

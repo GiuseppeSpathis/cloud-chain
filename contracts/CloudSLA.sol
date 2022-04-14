@@ -112,6 +112,8 @@ contract CloudSLA {
         require(
             block.timestamp >= currentSLA.validityPeriod.startTime &&
                 block.timestamp <= currentSLA.validityPeriod.endTime,
+            // use max_int only with go-quorum_raft instead of endTime
+            //115792089237316195423570985008687907853269984665640564039457584007913129639935
             "SLAValidity"
         );
         _;
