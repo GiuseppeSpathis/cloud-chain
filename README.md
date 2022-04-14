@@ -1,8 +1,5 @@
 # cloud-chain-simulation
 
-Project for the course "Blockchain and Cryptocurrencies" of the University of Bologna, A.Y. 2021/2022.
-This project aims to test different kinds of blockchains and consensus mechanism with the same contract [*CloudSLA.sol*](https://github.com/cotus997/cloud-chain-simulation/blob/main/contracts/CloudSLA.sol).
-
 ## Blockchains used
 
 We used three different kinds of blockchains with a default number of validator node that it's equal to 4. Other parameters equal for all configurations are the follow:
