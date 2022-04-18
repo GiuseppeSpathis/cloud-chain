@@ -1,6 +1,6 @@
 from string import Template
 
-SIMULATION_TIME = 300
+SIMULATION_TIME = 600
 TRANSIENT_VALUE = 50.
 
 _RESULTS_PHASE_PATH = Template('../simulation-web3py/results/$phase')

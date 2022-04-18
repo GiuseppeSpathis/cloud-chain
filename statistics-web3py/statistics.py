@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib as mpl
 from matplotlib import pyplot as plt
+import matplotlib.colors as mcolors
+import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
 
 from settings import SIMULATION_TIME, PLOT_DIR, functions, lambdas
 from utility import processing, truncate_length, extract_smooth_graph, exists_dir, join_paths
@@ -33,8 +36,8 @@ def mu_confidence_interval(data: np.ndarray) -> {}:
 def number_users_system(df: pd.DataFrame) -> {}:
     throughput = processing(df, np.array, count_row=True)
     throughput /= SIMULATION_TIME
-    avg_response_time = processing(df, np.mean)
-    users_number = throughput * avg_response_time
+    #avg_response_time = processing(df, np.mean)
+    users_number = throughput  # / avg_response_time
     return mu_confidence_interval(users_number)
 
 
@@ -186,8 +189,8 @@ def bar_plot_one_metric(df: pd.DataFrame, labels: [], metric: str, title: str, s
 
 
 def new_plot(df_metrics: pd.DataFrame) -> None:
-    fig, axs = plt.subplots(2, len(lambdas), sharex=True, sharey='row',
-                            figsize=(7 * len(lambdas), 10), gridspec_kw={'height_ratios': [2.5, 1]})
+    fig, axs = plt.subplots(3, len(lambdas), sharex=True, sharey='row',
+                            figsize=(7 * len(lambdas), 10), gridspec_kw={'height_ratios': [2.5, 0.7, 1]})
     labels = ['read', 'upload', 'delete', 'file_check', 'read_deny']
 
     for idl, l in enumerate(lambdas):
@@ -196,7 +199,8 @@ def new_plot(df_metrics: pd.DataFrame) -> None:
         df = df_rounded_lambda.sort_values(by=['exp'])
 
         metric = 'avg'
-        title = 'prova'
+        metric2 = 'num_user'
+        #title = 'prova'
         x = np.arange(len(labels))
         width = 0.1
 
@@ -208,33 +212,82 @@ def new_plot(df_metrics: pd.DataFrame) -> None:
             )
 
         rects = []
+        rects2 = []
         for idx, val in enumerate(df['exp'].unique()):
             metric_series = pd.Series(df[df['exp'] == val][metric])
+            throughput_series = pd.Series(df[df['exp'] == val][metric2])
             error_series = pd.Series(df[df['exp'] == val]['mean_error'])
             rects.append(
-                axs[0][idl].bar(rs[idx], metric_series, width, label=val)
+                axs[0][idl].bar(rs[idx], metric_series, width, label=val[0:-2])
             )
-            axs[1][idl].bar(rs[idx], error_series, width, label=val)
+            rects2.append(
+                axs[1][idl].bar(rs[idx], throughput_series,
+                                width, label=val[0:-2])
+            )
+            axs[2][idl].bar(rs[idx], error_series, width, label=val[0:-2])
 
         for rect in rects:
-            axs[0][idl].bar_label(rect, padding=3, rotation='vertical')
+            axs[0][idl].bar_label(rect, padding=4, rotation='vertical')
+        for rect in rects2:
+            axs[1][idl].bar_label(rect, padding=4, rotation='vertical')
 
         loc_ticks = [(val + (len(rects) / 2) * width) -
                      width / 2 for val in range(len(rects[0]))]
-        axs[1][idl].set_xticks(loc_ticks, labels, rotation=45, ha="right")
+        axs[2][idl].set_xticks(loc_ticks, labels, rotation=45, ha="right")
 
     y_label = 'Avg Latency (sec)'
+    y_label1 = 'Throughput (req/sec)'
     y_label2 = 'Errors (%)'
     y_max = df[metric].max() + 3
+    y_max1 = df[metric2].max() + .4
     y_max2 = df['mean_error'].max() + 1
 
-    axs[0][0].set_title(title, fontsize=24)
+    #axs[0][0].set_title(title, fontsize=24)
     axs[0][0].set_ylabel(y_label)
-    axs[1][0].set_ylabel(y_label2)
+    axs[1][0].set_ylabel(y_label1)
+    axs[2][0].set_ylabel(y_label2)
     axs[0][0].set_ylim(ymin=0, ymax=y_max)
-    axs[1][0].set_ylim(ymin=0, ymax=y_max2)
+    axs[1][0].set_ylim(ymin=0, ymax=y_max1)
+    axs[2][0].set_ylim(ymin=0, ymax=y_max2)
     axs[0][0].legend(loc='upper left')
 
     fig.tight_layout()
+
+    plt.show()
+
+
+def new_plot_transient(df: pd.DataFrame) -> None:
+    _, ax = plt.subplots(figsize=(9, 7))
+
+    exp_group = ['besu_ibft_4', 'go-quorum_ibft_4', 'polygon_ibft_4']
+    #title = 'Transient with lambda'
+
+    colors = list(mcolors.TABLEAU_COLORS)
+    linestyles = ['-', '--', ':', '-.']
+    flag = False
+    patches = []
+    for idl, l in enumerate(lambdas):
+        df_filter = df[df['lambda'] == l]
+        #title += f' - {l}'
+
+        df_filter = df_filter[df_filter['exp'].isin(exp_group)]
+
+        for idx in range(df_filter.shape[0]):
+            ax.plot(df_filter['transient'].iloc[idx][:60],
+                    linestyle=linestyles[idl % len(linestyles)], color=colors[idx])
+            if not flag:
+                patches.append(mpatches.Patch(
+                    color=colors[idx], label=df_filter['exp'].iloc[idx]))
+        flag = True
+        patches.append(mlines.Line2D([], [], color='black',
+                                     linestyle=linestyles[idl % len(
+                                         linestyles)], label=f'lambda {l}'))
+
+    #ax.set_title(title, fontsize=16)
+    plt.legend(handles=patches)
+    plt.xlabel('i-th operation request')
+    plt.ylabel('Avg Latency (sec)')
+    # plt.yscale('log')
+    plt.grid()
 
     plt.show()

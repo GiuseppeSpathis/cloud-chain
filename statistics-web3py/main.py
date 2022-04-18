@@ -5,7 +5,7 @@ import pandas as pd
 
 from settings import experiments, lambdas, functions, TRANSIENT_VALUE, RESULT_DIR
 from statistics import response_time_blockchain, number_users_system, calculate_transient, mean_error, \
-    bar_plot_metrics, bar_plot_one_metric, plot_transient, new_plot
+    bar_plot_metrics, bar_plot_one_metric, plot_transient, new_plot, new_plot_transient
 from utility import read_csv, extract_data_function, filter_lambda_status, phase_path, experiment_path, \
     filter_transient_time, filter_fn_lambda, exists_dir, join_paths
 
@@ -103,9 +103,7 @@ def main():
     df_metrics = metrics_dataframe()
 
     if not args.transient:
-        if args.new != 'none':
-            new_plot(df_metrics)
-        else:
+        if not args.new:
             if args.experiment == 'none':
                 for lambda_p in lambdas:
                     df_filter_lambda = df_metrics[df_metrics['lambda'] == lambda_p]
@@ -129,13 +127,18 @@ def main():
                     different_view(df_metrics, lambdas, 'lambda')
                 elif args.view == 'lambda':
                     different_view(df_metrics, functions, 'fn')
+        else:
+            new_plot(df_metrics)
     else:
-        exp_group = ['besu_ibft_4', 'go-quorum_ibft_4', 'polygon_ibft_4']
+        if args.new != 'none':
+            new_plot_transient(df_metrics)
+        else:
+            exp_group = ['besu_ibft_4', 'go-quorum_ibft_4', 'polygon_ibft_4']
 
-        for lambda_p in lambdas:
-            df_filter = df_metrics[df_metrics['lambda'] == lambda_p]
-            title = f'Transient with lambda {lambda_p}'
-            plot_transient(df_filter, exp_group, title, args.save)
+            for lambda_p in lambdas:
+                df_filter = df_metrics[df_metrics['lambda'] == lambda_p]
+                title = f'Transient with lambda {lambda_p}'
+                plot_transient(df_filter, exp_group, title, args.save)
 
     if args.save:
         exists_dir(RESULT_DIR)
