@@ -5,7 +5,7 @@ import pandas as pd
 
 from settings import experiments, lambdas, functions, TRANSIENT_VALUE, RESULT_DIR
 from statistics import response_time_blockchain, number_users_system, calculate_transient, mean_error, \
-    bar_plot_metrics, bar_plot_one_metric, plot_transient
+    bar_plot_metrics, bar_plot_one_metric, plot_transient, new_plot
 from utility import read_csv, extract_data_function, filter_lambda_status, phase_path, experiment_path, \
     filter_transient_time, filter_fn_lambda, exists_dir, join_paths
 
@@ -51,7 +51,8 @@ def metrics_dataframe() -> pd.DataFrame:
                     })
                     df_metrics = pd.concat([df_metrics, df], ignore_index=True)
                 else:
-                    df_truncated = filter_transient_time(df_filter, np.float64(TRANSIENT_VALUE))
+                    df_truncated = filter_transient_time(
+                        df_filter, np.float64(TRANSIENT_VALUE))
 
                     avg = response_time_blockchain(df_truncated, np.mean)
                     _min = response_time_blockchain(df_truncated, np.min)
@@ -59,8 +60,10 @@ def metrics_dataframe() -> pd.DataFrame:
                     median = response_time_blockchain(df_truncated, np.median)
                     num_user = number_users_system(df_truncated)
 
-                    df_error = filter_lambda_status(df_fn, lambda_p, status=False)
-                    df_all = pd.concat([df_filter, df_error], ignore_index=True)
+                    df_error = filter_lambda_status(
+                        df_fn, lambda_p, status=False)
+                    df_all = pd.concat(
+                        [df_filter, df_error], ignore_index=True)
                     error = mean_error(df_all, df_error)
                     df = pd.DataFrame({
                         'fn': [fn],
@@ -100,27 +103,32 @@ def main():
     df_metrics = metrics_dataframe()
 
     if not args.transient:
-        if args.experiment == 'none':
-            for lambda_p in lambdas:
-                df_filter_lambda = df_metrics[df_metrics['lambda'] == lambda_p]
-                df_rounded_lambda = df_filter_lambda.round(1)
-                title = f'Percentage error all functions - lambda {lambda_p}'
-                bar_plot_one_metric(df_rounded_lambda, functions, 'mean_error', title, args.save)
-                title = f'Number of users for all functions - lambda {lambda_p}'
-                bar_plot_one_metric(df_rounded_lambda, functions, 'num_user', title, args.save)
-
-                for fn in functions:
-                    df_filter = filter_fn_lambda(df_metrics, fn, lambda_p)
-                    df_rounded = df_filter.round(2)
-                    df = df_rounded.sort_values('avg')
-                    title = f'{fn} - lambda {lambda_p}'
-                    labels = ['min', 'avg', 'median', 'max']
-                    bar_plot_metrics(df, labels, title, 'exp', args.save)
+        if args.new != 'none':
+            new_plot(df_metrics)
         else:
-            if args.view == 'fn':
-                different_view(df_metrics, lambdas, 'lambda')
-            elif args.view == 'lambda':
-                different_view(df_metrics, functions, 'fn')
+            if args.experiment == 'none':
+                for lambda_p in lambdas:
+                    df_filter_lambda = df_metrics[df_metrics['lambda'] == lambda_p]
+                    df_rounded_lambda = df_filter_lambda.round(1)
+                    title = f'Percentage error all functions - lambda {lambda_p}'
+                    bar_plot_one_metric(df_rounded_lambda,
+                                        functions, 'mean_error', title, args.save)
+                    title = f'Number of users for all functions - lambda {lambda_p}'
+                    bar_plot_one_metric(df_rounded_lambda,
+                                        functions, 'num_user', title, args.save)
+
+                    for fn in functions:
+                        df_filter = filter_fn_lambda(df_metrics, fn, lambda_p)
+                        df_rounded = df_filter.round(2)
+                        df = df_rounded.sort_values('avg')
+                        title = f'{fn} - lambda {lambda_p}'
+                        labels = ['min', 'avg', 'median', 'max']
+                        bar_plot_metrics(df, labels, title, 'exp', args.save)
+            else:
+                if args.view == 'fn':
+                    different_view(df_metrics, lambdas, 'lambda')
+                elif args.view == 'lambda':
+                    different_view(df_metrics, functions, 'fn')
     else:
         exp_group = ['besu_ibft_4', 'go-quorum_ibft_4', 'polygon_ibft_4']
 
@@ -140,7 +148,7 @@ def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Statistics analysis of web3py project.',
-        usage='%(prog)s [-e EXPERIMENT [-v VIEW]] [-t] [-s]'
+        usage='%(prog)s [-e EXPERIMENT [-v VIEW]] [-t] [-s] [-n]'
     )
     parser.add_argument(
         '-e', '--experiment', default='none', type=str,
@@ -161,6 +169,11 @@ if __name__ == '__main__':
         '-s', '--save', default=False,
         action='store_true',
         help='save metrics csv and plot'
+    )
+    parser.add_argument(
+        '-n', '--new', default=False,
+        action='store_true',
+        help='new plot'
     )
 
     args = parser.parse_args()

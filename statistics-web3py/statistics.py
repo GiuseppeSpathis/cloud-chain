@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib as mpl
 from matplotlib import pyplot as plt
 
-from settings import SIMULATION_TIME, PLOT_DIR
+from settings import SIMULATION_TIME, PLOT_DIR, functions, lambdas
 from utility import processing, truncate_length, extract_smooth_graph, exists_dir, join_paths
 
 mpl.rc('figure', max_open_warning=0)
@@ -117,7 +117,8 @@ def bar_plot_metrics(df: pd.DataFrame, labels: [], title: str, column: str, save
     y_max = df['max'].max() + 2.5
     ax.set_ylim(ymin=0, ymax=y_max)
 
-    loc_ticks = [(val + (len(rects) / 2) * width) - width / 2 for val in range(len(rects[0]))]
+    loc_ticks = [(val + (len(rects) / 2) * width) -
+                 width / 2 for val in range(len(rects[0]))]
     upper_labels = [val.upper() for val in labels]
     ax.set_xticks(loc_ticks, upper_labels)
     ax.legend(loc='upper left')
@@ -166,7 +167,8 @@ def bar_plot_one_metric(df: pd.DataFrame, labels: [], metric: str, title: str, s
     ax.set_ylabel(y_label)
     ax.set_ylim(ymin=0, ymax=y_max)
 
-    loc_ticks = [(val + (len(rects) / 2) * width) - width / 2 for val in range(len(rects[0]))]
+    loc_ticks = [(val + (len(rects) / 2) * width) -
+                 width / 2 for val in range(len(rects[0]))]
     ax.set_xticks(loc_ticks, labels)
     ax.legend(loc='upper left')
 
@@ -181,3 +183,58 @@ def bar_plot_one_metric(df: pd.DataFrame, labels: [], metric: str, title: str, s
         plt.savefig(figure_path)
     else:
         plt.show()
+
+
+def new_plot(df_metrics: pd.DataFrame) -> None:
+    fig, axs = plt.subplots(2, len(lambdas), sharex=True, sharey='row',
+                            figsize=(7 * len(lambdas), 10), gridspec_kw={'height_ratios': [2.5, 1]})
+    labels = ['read', 'upload', 'delete', 'file_check', 'read_deny']
+
+    for idl, l in enumerate(lambdas):
+        df_filter_lambda = df_metrics[df_metrics['lambda'] == l]
+        df_rounded_lambda = df_filter_lambda.round(1)
+        df = df_rounded_lambda.sort_values(by=['exp'])
+
+        metric = 'avg'
+        title = 'prova'
+        x = np.arange(len(labels))
+        width = 0.1
+
+        rs = [x]
+        for idx in range(1, df['exp'].unique().shape[0]):
+            tmp = rs[idx - 1]
+            rs.append(
+                [val + width for val in tmp]
+            )
+
+        rects = []
+        for idx, val in enumerate(df['exp'].unique()):
+            metric_series = pd.Series(df[df['exp'] == val][metric])
+            error_series = pd.Series(df[df['exp'] == val]['mean_error'])
+            rects.append(
+                axs[0][idl].bar(rs[idx], metric_series, width, label=val)
+            )
+            axs[1][idl].bar(rs[idx], error_series, width, label=val)
+
+        for rect in rects:
+            axs[0][idl].bar_label(rect, padding=3, rotation='vertical')
+
+        loc_ticks = [(val + (len(rects) / 2) * width) -
+                     width / 2 for val in range(len(rects[0]))]
+        axs[1][idl].set_xticks(loc_ticks, labels, rotation=45, ha="right")
+
+    y_label = 'Avg Latency (sec)'
+    y_label2 = 'Errors (%)'
+    y_max = df[metric].max() + 3
+    y_max2 = df['mean_error'].max() + 1
+
+    axs[0][0].set_title(title, fontsize=24)
+    axs[0][0].set_ylabel(y_label)
+    axs[1][0].set_ylabel(y_label2)
+    axs[0][0].set_ylim(ymin=0, ymax=y_max)
+    axs[1][0].set_ylim(ymin=0, ymax=y_max2)
+    axs[0][0].legend(loc='upper left')
+
+    fig.tight_layout()
+
+    plt.show()
