@@ -14,7 +14,7 @@ COMPILED_CLOUD_SLA_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='CloudSLA
 CONFIG_DIR = 'config'
 RESULTS_CSV_DIR = 'results'
 
-NUM_TRANSACTIONS = 5
+NUM_TRANSACTIONS = 1
 DEPLOYED_CONTRACTS = 1#40
 
 __QUORUM_PATH = '../quorum/src/private_keys.json'

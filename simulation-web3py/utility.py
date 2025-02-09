@@ -26,6 +26,7 @@ async def init_simulation(contracts: [], factor: float, fn: str, status_init: bo
                 if fn == 'delete':
                     for _ in range(round(factor / DEPLOYED_CONTRACTS) + 1):
                         statuses.append(await c.upload())
+                
         else:
             for c in contracts:
                 if fn == 'delete':
@@ -90,7 +91,6 @@ def get_contract(w3, address: Address, compiled_contract_path: str) -> Contract:
 
     abi = get_abi(compiled_contract_path)
     contract = w3.eth.contract(address=address, abi=abi)
-
     return contract
 
 

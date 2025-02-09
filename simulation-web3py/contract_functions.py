@@ -195,12 +195,10 @@ class ContractTest:
 
     async def sequence_file(self, filepath: str, url: str, hash_digest: str) -> bool:
         statuses = []
-
         # Contracts
         contract_cloud_sla = get_contract(self.w3, self.cloud_address, COMPILED_CLOUD_SLA_PATH)
         contract_aggregator = get_contract(self.w3, self.aggregator_address, COMPILED_AGGREGATOR_PATH)
         #contract_oracle = get_contract(self.w3, self.aggregator_address, COMPILED_ORACLE_PATH)
-
         # Transactions
         tx_file_hash_request = contract_cloud_sla.functions.FileHashRequest(
             filepath
@@ -209,7 +207,6 @@ class ContractTest:
             'from': self.accounts[1],
             'nonce': await self.get_nonce(1)
         })
-        
         statuses.append(await self.sign_send_transaction(tx_file_hash_request, self.private_keys[1]))
 
         tx_digit_store = contract_aggregator.functions.DigestStore(
@@ -227,6 +224,8 @@ class ContractTest:
         fileIsImportant = hash_digest == '0x4f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
         if fileIsImportant:
             print(f'File is important con digest {hash_digest}')
+        else:
+            print(f'File is not important con digest {hash_digest}')
             
         tx_file_check = contract_cloud_sla.functions.FileCheck(
             filepath,
@@ -236,6 +235,7 @@ class ContractTest:
             'from': self.accounts[1],
             'nonce': await self.get_nonce(1)
         })
+        
         statuses.append(await self.sign_send_transaction(tx_file_check, self.private_keys[1]))
         print("printo statuses in sequence file")
         print(statuses)
@@ -423,9 +423,8 @@ class ContractTest:
         #filepath = f'importantFile.pdf'
         url = f'www.{filepath}.com'
         hash_digest = '0x4f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
-
+        print("in corrupted file check")
         all_statuses = await self.sequence_file(filepath, url, hash_digest)
-
         if all_statuses and DEBUG:
             #print(f'sequence file per corrupted_file_check con filepath: {filepath} e url: {url} e hash: {hash_digest}')
             

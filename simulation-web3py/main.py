@@ -19,7 +19,6 @@ from utility import range_limited_val, init_simulation, get_contracts_config, ex
 
 
 def between_callback(process_count: int, fn: str):
-    print(f'Process {process_count} started con function {fn}.')
     global df
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -36,7 +35,6 @@ async def get_time(func_to_run: str, process_count: int):
     # Values to store
     cloud_address = 'NaN'
     start_fun, end_fun = datetime.now(), datetime.now()
-
     try:
         if 'cloud_sla_creation_activation' in func_to_run:
             #start_fun = datetime.now()
@@ -84,7 +82,6 @@ async def main():
         print(f'numero transazione {i}')
         
         func_to_run = f'contracts[{idx % DEPLOYED_CONTRACTS}].{args.function}()'
-
         # Chiama la funzione una sola volta e attendi il risultato
         await get_time(func_to_run, 0)
         
@@ -171,7 +168,7 @@ if __name__ == '__main__':
         help='the lambda parameter for interarrival time Poisson'
     )
     parser.add_argument(
-        '-d', '--deploy', default=True,
+        '-d', '--deploy', default=False,
         action='store_true',
         help='deploy contracts to blockchain'
     )
