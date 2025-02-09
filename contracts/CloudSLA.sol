@@ -344,11 +344,11 @@ contract CloudSLA {
             files[i].states.push(State.checkRequested);
     }
 
-    function FileCheck(string calldata filepath) external OnlyUser IsSLAValid {
+    function FileCheck(string calldata filepath, bool fileIsImportant) external OnlyUser IsSLAValid {
         bytes32 i = Hash(filepath);
         require(FileInBC(i) && FileState(i, State.checkRequested));
         bool intactOnCloud = (files[i].digests[files[i].digests.length - 1] ==
-            Aggregator(aggregator).DigestRetrieve(files[i].url));
+            Aggregator(aggregator).DigestRetrieve(files[i].url, fileIsImportant));
         string memory res = "No SLA violations.";
 
         if (!files[i].onCloud && intactOnCloud) {

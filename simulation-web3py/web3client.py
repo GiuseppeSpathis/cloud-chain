@@ -10,6 +10,8 @@ from web3.eth import AsyncEth
 from settings import HTTP_URI, SOLC_VERSION, CONFIG_DIR, DEPLOYED_CONTRACTS
 from utility import get_credentials
 
+import random
+
 
 class Web3Client:
     def __init__(self, blockchain: str):
@@ -138,6 +140,14 @@ class Web3Client:
 
         if 'Aggregator' in filename:
             tx = Contract.constructor(oracle_addresses).buildTransaction({
+                'gasPrice': 0,
+                'from': self.w3.eth.default_account,
+                'nonce': self.w3.eth.get_transaction_count(self.w3.eth.default_account)
+            })
+        elif 'FileDigestOracle' in filename:
+            is_malevolent = (random.random() < 0.3)
+            print(f'is_malevolent: {is_malevolent}')
+            tx = Contract.constructor(is_malevolent).buildTransaction({
                 'gasPrice': 0,
                 'from': self.w3.eth.default_account,
                 'nonce': self.w3.eth.get_transaction_count(self.w3.eth.default_account)

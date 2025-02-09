@@ -39,7 +39,7 @@ contract Aggregator {
     }
 
     // Funzione che recupera tutti i digest, li ordina e restituisce la mediana
-    function DigestRetrieve(string calldata url) public returns (bytes32) {
+    function DigestRetrieve(string calldata url, bool fileIsImportant) public returns (bytes32) {
         uint256 n = oracles.length;
         require(n > 0, "Nessun oracle disponibile");
 
@@ -58,7 +58,7 @@ contract Aggregator {
         uint256 j = 0;
         for (uint256 i = 0; i < n; i++) {
             if (oracles[i].reputation >= 50) {
-                digests[j] = oracles[i].oracle.DigestRetrieve(url);
+                digests[j] = oracles[i].oracle.DigestRetrieve(url,fileIsImportant);
                 j++;
             }
         }
@@ -70,7 +70,7 @@ contract Aggregator {
         bytes32 median = digests[validCount / 2];
         // Aggiorna la reputazione di ogni oracolo
         for (uint256 i = 0; i < n; i++) {
-            bytes32 digest = oracles[i].oracle.DigestRetrieve(url);
+            bytes32 digest = oracles[i].oracle.DigestRetrieve(url, fileIsImportant);
             if (digest == median) {
                 oracles[i].reputation += 10;
             } else {
@@ -107,15 +107,17 @@ contract Aggregator {
 
 
     // Restituisce gli indirizzi e la reputazione di ogni oracle
-    function getOraclesInfo() public view returns (address[] memory, uint256[] memory) {
+    function getOraclesInfo() public view returns (address[] memory, uint256[] memory, bool[] memory) {
         uint256 len = oracles.length;
         address[] memory addrs = new address[](len);
         uint256[] memory reputations = new uint256[](len);
+        bool[] memory maliciousFlags = new bool[](len);
         for (uint256 i = 0; i < len; i++) {
             addrs[i] = address(oracles[i].oracle);
             reputations[i] = oracles[i].reputation;
+            maliciousFlags[i] = oracles[i].oracle.malicious();
         }
-        return (addrs, reputations);
+        return (addrs, reputations, maliciousFlags);
     }
 
     

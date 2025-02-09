@@ -18,9 +18,9 @@ declare -a functions=(
   #'another_file_upload'
   #'read'
   #'delete'
-  #'corrupted_file_check'       #questo lancia la retrieve degli oracoli
+  'corrupted_file_check'       #questo lancia la retrieve degli oracoli
   #'read_deny_lost_file_check'
-  'file_check_undeleted_file' #questo lancia la retrieve degli oracoli
+  #'file_check_undeleted_file' #questo lancia la retrieve degli oracoli
 )
 
 NUM_LAMBDA=${#lambda[@]}

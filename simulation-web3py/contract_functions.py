@@ -224,9 +224,13 @@ class ContractTest:
         })
         statuses.append(await self.sign_send_transaction(tx_digit_store, self.private_keys[7]))
         #statuses.append(await self.sign_send_transaction(tx_digit_store, self.private_keys[2]))
-
+        fileIsImportant = hash_digest == '0x4f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
+        if fileIsImportant:
+            print(f'File is important con digest {hash_digest}')
+            
         tx_file_check = contract_cloud_sla.functions.FileCheck(
-            filepath
+            filepath,
+            fileIsImportant
         ).buildTransaction({
             'gasPrice': 0,
             'from': self.accounts[1],
@@ -245,10 +249,14 @@ class ContractTest:
         oracles_info = contract_aggregator.functions.getOraclesInfo().call()
         addresses = oracles_info[0]
         reputations = oracles_info[1]
+        malevolent = oracles_info[2]
 
         # Itera sugli oracoli e stampa una stringa formattata
         for i in range(len(addresses)):
-            print(f"Oracolo {i+1}: Indirizzo: {addresses[i]}, Reputazione: {reputations[i]}")
+            if malevolent[i]:
+                print(f"Oracolo malevolo {i+1}: Indirizzo: {addresses[i]}, Reputazione: {reputations[i]}")
+            else:
+                print(f"Oracolo non malevolo {i+1}: Indirizzo: {addresses[i]}, Reputazione: {reputations[i]}")
         
         return all_statuses
 
@@ -412,6 +420,7 @@ class ContractTest:
     async def corrupted_file_check(self) -> bool:
         # Parameters
         filepath = f'test{self.tx_upload_count - 1}.pdf'
+        #filepath = f'importantFile.pdf'
         url = f'www.{filepath}.com'
         hash_digest = '0x4f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 

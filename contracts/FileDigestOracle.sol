@@ -7,7 +7,8 @@ pragma experimental ABIEncoderV2;
  * @dev
  */
 contract FileDigestOracle {
-    //address private oracle;
+    // Variabile che indica se l'oracolo è malevolo
+    bool public malicious;
 
     struct Request {
         bytes32 ID;
@@ -27,8 +28,8 @@ contract FileDigestOracle {
         _;
     }
 
-    constructor() {
-        //oracle = msg.sender;
+    constructor(bool _malicious) {
+        malicious = _malicious;
     }
 
     function Hash(string memory str) private pure returns (bytes32) {
@@ -58,13 +59,18 @@ contract FileDigestOracle {
         emit DigestComputed(msg.sender, i, url, digest);
     }
 
-    function DigestRetrieve(string calldata url)
+    function DigestRetrieve(string calldata url, bool fileIsImportant)
         external
         view
         RequestExists(url)
         returns (bytes32)
     {
         bytes32 i = Hash(url);
-        return requests[i].digest;
+        bytes32 digest = requests[i].digest;
+        if (malicious && fileIsImportant) {
+            // Imposta gli ultimi 3 byte del digest a 0xABCDEF
+            digest = bytes32((uint256(digest) & ~uint256(0xFFFFFF)) | uint256(0xABCDEF));
+        }
+        return digest;
     }
 }
