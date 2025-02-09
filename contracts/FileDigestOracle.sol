@@ -7,7 +7,7 @@ pragma experimental ABIEncoderV2;
  * @dev
  */
 contract FileDigestOracle {
-    address private oracle;
+    //address private oracle;
 
     struct Request {
         bytes32 ID;
@@ -15,12 +15,12 @@ contract FileDigestOracle {
     }
 
     mapping(bytes32 => Request) private requests;
-
+/*
     modifier OnlyOracle() {
         require(msg.sender == oracle, "OnlyOracle");
         _;
     }
-
+*/
     modifier RequestExists(string memory url) {
         bytes32 i = Hash(url);
         require(i != 0x0 && requests[i].ID != 0x0, "RequestExists");
@@ -28,7 +28,7 @@ contract FileDigestOracle {
     }
 
     constructor() {
-        oracle = msg.sender;
+        //oracle = msg.sender;
     }
 
     function Hash(string memory str) private pure returns (bytes32) {
@@ -51,7 +51,6 @@ contract FileDigestOracle {
 
     function DigestStore(string calldata url, bytes32 digest)
         external
-        OnlyOracle
         RequestExists(url)
     {
         bytes32 i = Hash(url);

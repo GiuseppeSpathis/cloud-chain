@@ -8,12 +8,14 @@ SOLC_VERSION = '0.8.9'
 __COMPILED_CONTRACT_PATH = Template('../build/contracts/${contract}')
 COMPILED_FACTORY_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='Factory.json')
 COMPILED_ORACLE_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='FileDigestOracle.json')
+COMPILED_AGGREGATOR_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='Aggregator.json')
 COMPILED_CLOUD_SLA_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='CloudSLA.json')
 
 CONFIG_DIR = 'config'
 RESULTS_CSV_DIR = 'results'
 
-DEPLOYED_CONTRACTS = 40
+NUM_TRANSACTIONS = 5
+DEPLOYED_CONTRACTS = 1#40
 
 __QUORUM_PATH = '../quorum/src/private_keys.json'
 with open(__QUORUM_PATH) as file:

@@ -5,10 +5,11 @@ from web3 import Web3
 from web3.exceptions import TimeExhausted
 
 from settings import (
-    COMPILED_FACTORY_PATH, COMPILED_ORACLE_PATH,
+    COMPILED_FACTORY_PATH, COMPILED_ORACLE_PATH, COMPILED_AGGREGATOR_PATH,
     COMPILED_CLOUD_SLA_PATH, DEBUG
 )
 from utility import get_contract, check_statuses
+
 
 
 class ContractTest:
@@ -26,7 +27,8 @@ class ContractTest:
         self.w3_async = w3_async
 
         # Contracts address
-        self.oracle_address = contract_addresses['FileDigestOracle.sol']
+        self.aggregator_address = contract_addresses['Aggregator.sol']
+        #self.aggregator_address = contract_addresses['FileDigestOracle.sol'][0]
         self.factory_address = contract_addresses['Factory.sol']
         self.cloud_address = Address(cloud_address)
 
@@ -34,7 +36,7 @@ class ContractTest:
 
         self.filepaths = []
         self.tx_upload_count = tx_upload_count
-        self.lock = threading.Lock()
+        #self.lock = threading.Lock()
 
     def set_cloud_sla_address(self, address: Address):
         self.cloud_address = address
@@ -63,11 +65,11 @@ class ContractTest:
 
         # Contracts
         contract_factory = get_contract(self.w3, self.factory_address, COMPILED_FACTORY_PATH)
-        contract_oracle = get_contract(self.w3, self.oracle_address, COMPILED_ORACLE_PATH)
-
+        contract_aggregator = get_contract(self.w3, self.aggregator_address, COMPILED_AGGREGATOR_PATH)
+        #contract_aggregator = get_contract(self.w3, self.aggregator_address, COMPILED_ORACLE_PATH)
         # Transactions
         tx_create_child = contract_factory.functions.createChild(
-            contract_oracle.address,
+            contract_aggregator.address,
             self.accounts[1],
             price,
             test_validity_duration,
@@ -145,6 +147,12 @@ class ContractTest:
         statuses.append(await self.sign_send_transaction(tx_upload_transfer_ack, self.private_keys[0]))
 
         all_statuses = check_statuses(statuses)
+        
+        #if all_statuses and DEBUG:
+            #print(f'UploadRequest per upload con filepath: {filepath} e hash: {hash_digest}')
+            
+            #print(f'UploadRequestAck per upload con filepath: {filepath}')
+            
 
         return all_statuses
 
@@ -175,6 +183,13 @@ class ContractTest:
         statuses.append(await self.sign_send_transaction(tx_read_request_ack, self.private_keys[0]))
 
         all_statuses = check_statuses(statuses)
+        
+        #if all_statuses and DEBUG:
+            #print(f'ReadRequest per read con filepath: {filepath}')
+            
+            #print(f'ReadRequestAck per read con filepath: {filepath}')
+            
+            
 
         return all_statuses
 
@@ -183,7 +198,8 @@ class ContractTest:
 
         # Contracts
         contract_cloud_sla = get_contract(self.w3, self.cloud_address, COMPILED_CLOUD_SLA_PATH)
-        contract_oracle = get_contract(self.w3, self.oracle_address, COMPILED_ORACLE_PATH)
+        contract_aggregator = get_contract(self.w3, self.aggregator_address, COMPILED_AGGREGATOR_PATH)
+        #contract_oracle = get_contract(self.w3, self.aggregator_address, COMPILED_ORACLE_PATH)
 
         # Transactions
         tx_file_hash_request = contract_cloud_sla.functions.FileHashRequest(
@@ -193,17 +209,21 @@ class ContractTest:
             'from': self.accounts[1],
             'nonce': await self.get_nonce(1)
         })
+        
         statuses.append(await self.sign_send_transaction(tx_file_hash_request, self.private_keys[1]))
 
-        tx_digit_store = contract_oracle.functions.DigestStore(
+        tx_digit_store = contract_aggregator.functions.DigestStore(
             url,
             hash_digest
         ).buildTransaction({
             'gasPrice': 0,
-            'from': self.accounts[2],
-            'nonce': await self.get_nonce(2)
+            'from': self.accounts[7],
+            'nonce': await self.get_nonce(7)
+            #'from': self.accounts[2],
+            #'nonce': await self.get_nonce(2)
         })
-        statuses.append(await self.sign_send_transaction(tx_digit_store, self.private_keys[2]))
+        statuses.append(await self.sign_send_transaction(tx_digit_store, self.private_keys[7]))
+        #statuses.append(await self.sign_send_transaction(tx_digit_store, self.private_keys[2]))
 
         tx_file_check = contract_cloud_sla.functions.FileCheck(
             filepath
@@ -213,22 +233,37 @@ class ContractTest:
             'nonce': await self.get_nonce(1)
         })
         statuses.append(await self.sign_send_transaction(tx_file_check, self.private_keys[1]))
-
+        print("printo statuses in sequence file")
+        print(statuses)
         all_statuses = check_statuses(statuses)
+        
+        #if all_statuses and DEBUG:
+            #print(f'FileHashRequest per file con filepath: {filepath}')
+            #print(f'DigestStore per file con filepath: {filepath}')
+            #print(f'FileCheck per file con filepath: {filepath}')
+        
+        oracles_info = contract_aggregator.functions.getOraclesInfo().call()
+        addresses = oracles_info[0]
+        reputations = oracles_info[1]
 
+        # Itera sugli oracoli e stampa una stringa formattata
+        for i in range(len(addresses)):
+            print(f"Oracolo {i+1}: Indirizzo: {addresses[i]}, Reputazione: {reputations[i]}")
+        
         return all_statuses
 
     async def upload(self) -> bool:
         # Parameters
-        self.lock.acquire()
+        #self.lock.acquire()
         filepath = f'test{self.tx_upload_count}.pdf'
         self.tx_upload_count += 1
-        self.lock.release()
+        #self.lock.release()
         hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
         all_statuses = await self.sequence_upload(filepath, hash_digest)
-
         if all_statuses and DEBUG:
+            #print(f'sequence upload con filepath: {filepath} e hash: {hash_digest}')
+            
             print('Upload: OK')
 
         return all_statuses
@@ -240,6 +275,8 @@ class ContractTest:
 
         all_statuses = await self.sequence_read(filepath, url)
         if all_statuses and DEBUG:
+            #print(f'sequence read con filepath: {filepath} e url: {url}')
+            
             print('Read: OK')
 
         return all_statuses
@@ -248,10 +285,10 @@ class ContractTest:
         statuses = []
 
         # Parameter
-        self.lock.acquire()
+        #self.lock.acquire()
         self.tx_upload_count -= 1
         filepath = f'test{self.tx_upload_count}.pdf'
-        self.lock.release()
+        #self.lock.release()
 
         # Contract
         contract_cloud_sla = get_contract(self.w3, self.cloud_address, COMPILED_CLOUD_SLA_PATH)
@@ -278,6 +315,8 @@ class ContractTest:
         all_statuses = check_statuses(statuses)
 
         if all_statuses and DEBUG:
+            #print(f'contract_cloud_sla DeleteRequest per delete con filepath: {filepath}')
+            #print(f'contract_cloud_sla Delete per delete con filepath: {filepath}')
             print('Delete: OK')
 
         return all_statuses
@@ -289,23 +328,25 @@ class ContractTest:
         hash_digest = '0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
         all_statuses = await self.sequence_file(filepath, url, hash_digest)
-
+        
         if all_statuses and DEBUG:
+            #print(f'sequence file per file_check_undeleted_file con filepath: {filepath} e url: {url} e hash: {hash_digest}')
             print('File check for undeleted file: OK')
 
         return all_statuses
 
     async def another_file_upload(self) -> bool:
         # Parameters
-        self.lock.acquire()
+        #self.lock.acquire()
         filepath = f'test{self.tx_upload_count}.pdf'
         self.tx_upload_count += 1
-        self.lock.release()
+        #self.lock.release()
         hash_digest = '0x1f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
         all_statuses = await self.sequence_upload(filepath, hash_digest)
 
         if all_statuses and DEBUG:
+            #print(f'sequence upload per another_file_upload con filepath: {filepath} e hash: {hash_digest}')
             print('Another file upload: OK')
 
         return all_statuses
@@ -337,20 +378,22 @@ class ContractTest:
             'nonce': await self.get_nonce(0)
         })
         statuses.append(await self.sign_send_transaction(tx_read_request_deny, self.private_keys[0]))
-
         all_statuses = check_statuses(statuses)
 
         if all_statuses and DEBUG:
+            #print(f'contract sla ReadRequest per read_deny_lost_file_check con filepath: {filepath}')
+            #print(f'contract sla ReadRequestDeny per read_deny_lost_file_check con filepath: {filepath}')
+            
             print('Read Deny with lost file check: OK')
 
         return all_statuses
 
     async def another_file_upload_read(self) -> bool:
         # Parameters
-        self.lock.acquire()
+        #self.lock.acquire()
         filepath = f'test{self.tx_upload_count}.pdf'
         self.tx_upload_count += 1
-        self.lock.release()
+        #self.lock.release()
         url = f'www.{filepath}.com'
         hash_digest = '0x2f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
 
@@ -361,6 +404,7 @@ class ContractTest:
         all_statuses_read = await self.sequence_read(filepath, url)
 
         if all_statuses_upload and all_statuses_read and DEBUG:
+            #print(f'sequence file per another_file_upload_read con filepath: {filepath} e url: {url} e hash: {hash_digest}')
             print('Another file upload + read: OK')
 
         return all_statuses_upload and all_statuses_read
@@ -374,6 +418,8 @@ class ContractTest:
         all_statuses = await self.sequence_file(filepath, url, hash_digest)
 
         if all_statuses and DEBUG:
+            #print(f'sequence file per corrupted_file_check con filepath: {filepath} e url: {url} e hash: {hash_digest}')
+            
             print('File Check for corrupted file: OK')
 
         return all_statuses

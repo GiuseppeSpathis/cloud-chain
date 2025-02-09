@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "./FileDigestOracle.sol";
+import "./Aggregator.sol";
 
 contract CloudSLA {
-    address private oracle;
+    address private aggregator;
     address private user;
     address private cloud;
 
@@ -166,7 +166,7 @@ contract CloudSLA {
     );
 
     constructor(
-        address _oracle,
+        address _aggregator,
         address _cloud,
         address _user,
         uint256 _price,
@@ -174,7 +174,7 @@ contract CloudSLA {
         uint256 lostFileCredits,
         uint256 undeletedFileCredits
     ) {
-        oracle = _oracle;
+        aggregator = _aggregator;
         cloud = _cloud;
         user = _user;
         price = _price;
@@ -339,7 +339,7 @@ contract CloudSLA {
     {
         bytes32 i = Hash(filepath);
         require(UrlPublished(i));
-        FileDigestOracle(oracle).DigestRequest(files[i].url);
+        Aggregator(aggregator).DigestRequest(files[i].url);
         if (files[i].states[files[i].states.length - 1] != State.checkRequested)
             files[i].states.push(State.checkRequested);
     }
@@ -348,7 +348,7 @@ contract CloudSLA {
         bytes32 i = Hash(filepath);
         require(FileInBC(i) && FileState(i, State.checkRequested));
         bool intactOnCloud = (files[i].digests[files[i].digests.length - 1] ==
-            FileDigestOracle(oracle).DigestRetrieve(files[i].url));
+            Aggregator(aggregator).DigestRetrieve(files[i].url));
         string memory res = "No SLA violations.";
 
         if (!files[i].onCloud && intactOnCloud) {

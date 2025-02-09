@@ -32,6 +32,36 @@ async def init_simulation(contracts: [], factor: float, fn: str, status_init: bo
                     if c.tx_upload_count < round(factor / DEPLOYED_CONTRACTS) + 1:
                         for _ in range(abs(c.tx_upload_count - (round(factor / DEPLOYED_CONTRACTS) + 1))):
                             statuses.append(await c.upload())
+        '''
+        if status_init:
+            for c in contracts:
+            # Use different cloud_addresses for each contract instance
+                cloud_address, cloud_status_ok = await c.cloud_sla_creation_activation()
+                c.set_cloud_sla_address(cloud_address)
+                statuses.append(cloud_status_ok)
+                if fn == 'read':
+                    statuses.append(await c.read())
+                if fn == 'upload':
+                    statuses.append(await c.upload())
+                if fn == 'delete':
+                    statuses.append(await c.delete())
+                if fn == 'file_check_undeleted_file':
+                    statuses.append(await c.file_check_undeleted_file())
+                if fn == 'read_deny_lost_file_check':
+                    statuses.append(await c.read_deny_lost_file_check())
+        else: 
+            for c in contracts:
+                if fn == 'read':
+                    statuses.append(await c.read())
+                if fn == 'upload':
+                    statuses.append(await c.upload())
+                if fn == 'delete':
+                    statuses.append(await c.delete())
+                if fn == 'file_check_undeleted_file':
+                    statuses.append(await c.file_check_undeleted_file())
+                if fn == 'read_deny_lost_file_check':
+                    statuses.append(await c.read_deny_lost_file_check())
+        '''
 
     except ValueError as v:
         print(f'{type(v)} [init_sim]: {v}')
@@ -100,3 +130,30 @@ def range_limited_val(arg: str) -> int:
     if s < MIN_VAL or s > MAX_VAL:
         raise ArgumentTypeError(f"argument must be > {str(MIN_VAL)} and < {str(MAX_VAL)}")
     return s
+
+
+def sort(data):
+    quickSort(data, 0, len(data) - 1)
+    return data
+
+
+def quickSort(arr, left, right):
+    i = left
+    j = right
+    if(i==j): 
+        return
+    pivot = arr[left + (right - left) // 2]
+    while i <= j:
+        while (arr[i] < pivot): 
+            i += 1
+        while pivot < arr[j]:
+            j -= 1
+        if i <= j:
+            (arr[i], arr[j]) = (arr[j], arr[i])
+            i += 1
+            j -= 1
+    if left < j:
+        quickSort(arr, left, j)
+    if i < right:
+        quickSort(arr, i, right)
+

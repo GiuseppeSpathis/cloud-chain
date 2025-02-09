@@ -11,11 +11,15 @@ import pandas as pd
 
 from web3client import Web3Client
 from contract_functions import ContractTest
-from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS, CONFIG_DIR
+from settings import DEBUG, RESULTS_CSV_DIR, DEPLOYED_CONTRACTS, CONFIG_DIR, NUM_TRANSACTIONS
 from utility import range_limited_val, init_simulation, get_contracts_config, exists_mkdir
 
 
+
+
+
 def between_callback(process_count: int, fn: str):
+    print(f'Process {process_count} started con function {fn}.')
     global df
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
@@ -25,7 +29,8 @@ def between_callback(process_count: int, fn: str):
     df = pd.concat([df, df_to_append], ignore_index=True)
 
 
-async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
+#async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
+async def get_time(func_to_run: str, process_count: int):
     # Flag statuses
     function_status = False
     # Values to store
@@ -34,31 +39,31 @@ async def get_time(func_to_run: str, process_count: int) -> pd.DataFrame:
 
     try:
         if 'cloud_sla_creation_activation' in func_to_run:
-            start_fun = datetime.now()
+            #start_fun = datetime.now()
             cloud_address, function_status = await eval(func_to_run)
-            end_fun = datetime.now()
+            #end_fun = datetime.now()
         else:
-            start_fun = datetime.now()
+            #start_fun = datetime.now()
             function_status = await eval(func_to_run)
-            end_fun = datetime.now()
+            #end_fun = datetime.now()
     except ValueError as v:
         print(f'{type(v)} [get_time#{process_count}]: {v}')
         function_status = False
-        end_fun = datetime.now()
-    finally:
-        duration_fun = end_fun - start_fun
-
+        #end_fun = datetime.now()
+    #finally:
+        #duration_fun = end_fun - start_fun
+        '''
         return pd.DataFrame({
             'id': [process_count],
             'start_fun': [(start_fun - zero_time).total_seconds()],
             'end_fun': [(end_fun - zero_time).total_seconds()],
-            'time_fun': [duration_fun.total_seconds()],
+            #'time_fun': [duration_fun.total_seconds()],
             'address': [cloud_address],
             'status': function_status,
             'lambda': args.lambda_p,
             'num_run': args.num_run
         })
-
+        '''
 
 async def main():
     print('Start init phase...')
@@ -74,26 +79,38 @@ async def main():
     actual = (datetime.now() - zero_time).total_seconds()
     idx = 0
     jobs = []
-    while actual < start + args.time:
-        thread = threading.Thread(
-            target=between_callback,
-            args=[idx, f'contracts[{idx % DEPLOYED_CONTRACTS}].{args.function}']
-        )
-        jobs.append(thread)
+    i = 0
+    while i < NUM_TRANSACTIONS:
+        print(f'numero transazione {i}')
+        
+        func_to_run = f'contracts[{idx % DEPLOYED_CONTRACTS}].{args.function}()'
 
-        actual = (datetime.now() - zero_time).total_seconds()
-        rand = np.random.exponential(1 / args.lambda_p)
-        await asyncio.sleep(rand)
-        jobs[idx].start()
-        idx += 1
+        # Chiama la funzione una sola volta e attendi il risultato
+        await get_time(func_to_run, 0)
+        
+        #thread = threading.Thread(
+        #    target=between_callback,
+        #    args=[idx, f'contracts[{idx % DEPLOYED_CONTRACTS}].{args.function}']
+        #)
+        #jobs.append(thread)
 
-    for j in jobs:
-        j.join()
+        #actual = (datetime.now() - zero_time).total_seconds()
+        #rand = np.random.exponential(1 / args.lambda_p)
+        #await asyncio.sleep(rand)
+        #jobs[idx].start()
+        if idx < DEPLOYED_CONTRACTS:    
+            idx += 1
+        
+        i += 1
 
+    #for j in jobs:
+    #    j.join()
+    '''
     if DEBUG:
         print(df)
         print(f"Status column:\n{df[['id', 'status']]}")
         print(f"Rows with status True: {len(df.loc[df['status']])}")
+    '''
     print('Simulation completed.')
 
     update_summary = get_contracts_config(args.blockchain, msg=False)
@@ -105,7 +122,7 @@ async def main():
     filepath = os.path.join(os.getcwd(), CONFIG_DIR, config)
     with open(filepath, 'w') as file:
         json.dump(update_summary, file, indent=4)
-
+    '''
     if args.save:
         path = os.getcwd()
         results_dir = os.path.join(path, RESULTS_CSV_DIR)
@@ -116,7 +133,7 @@ async def main():
         results_path = os.path.join(out_dir, out_file)
         df.to_csv(results_path, index=False, encoding='utf-8')
         print(f'Output file saved in {results_path}.')
-
+    '''
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -154,7 +171,7 @@ if __name__ == '__main__':
         help='the lambda parameter for interarrival time Poisson'
     )
     parser.add_argument(
-        '-d', '--deploy', default=False,
+        '-d', '--deploy', default=True,
         action='store_true',
         help='deploy contracts to blockchain'
     )
@@ -184,6 +201,7 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args()
+    
     if args.save:
         if args.num_run == -1:
             parser.error("specify the id number for the output file")
@@ -203,12 +221,18 @@ if __name__ == '__main__':
     config_file = os.path.join(config_dir, filename)
     if args.deploy:
         contracts_summary = client.init_contracts()
+        #print('contract summary di 0')
+        #print(contracts_summary)
+        #print('contract summary di 1')
+        #print(contracts_summary[1])
     else:
         if not os.path.exists(config_file):
             print(f"Config file doesn't exist...")
             contracts_summary = client.init_contracts()
         else:
             contracts_summary = get_contracts_config(args.blockchain)
+
+
 
     contracts = []
     for i in range(DEPLOYED_CONTRACTS):
@@ -224,5 +248,5 @@ if __name__ == '__main__':
                 contracts_summary[index]['tx_upload_count']
             )
         )
-
     exit(asyncio.run(main()))
+

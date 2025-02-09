@@ -6,7 +6,7 @@ declare -a node_ids
 
 
 declare -i NUM_VALIDATORS=4
-declare -i NUM_ACCOUNTS=120
+declare -i NUM_ACCOUNTS=8 #320 120
 
 
 if [ $VAR = "yes" ]
