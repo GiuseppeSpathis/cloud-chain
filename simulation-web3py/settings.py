@@ -14,8 +14,10 @@ COMPILED_CLOUD_SLA_PATH = __COMPILED_CONTRACT_PATH.substitute(contract='CloudSLA
 CONFIG_DIR = 'config'
 RESULTS_CSV_DIR = 'results'
 
-NUM_TRANSACTIONS = 1
-DEPLOYED_CONTRACTS = 1#40
+NUM_TRANSACTIONS = 1 # quante volte la singola funzione viene lanciata
+#quanti contratti sla vengono creati, questo numero poi fa dipendere 
+#pure il numero di chiavi per contratto e il numero di account della blockchain presente in run_polygon
+DEPLOYED_CONTRACTS = 1#40 
 
 #__QUORUM_PATH = '../quorum/src/private_keys.json'
 #with open(__QUORUM_PATH) as file:
