@@ -17,9 +17,9 @@ RESULTS_CSV_DIR = 'results'
 NUM_TRANSACTIONS = 1
 DEPLOYED_CONTRACTS = 1#40
 
-__QUORUM_PATH = '../quorum/src/private_keys.json'
-with open(__QUORUM_PATH) as file:
-    quorum_private_keys = json.loads(file.read())['privatekey']
+#__QUORUM_PATH = '../quorum/src/private_keys.json'
+#with open(__QUORUM_PATH) as file:
+#    quorum_private_keys = json.loads(file.read())['privatekey']
 
 __POLYGON_PATH = Template('../polygon/src/${filename}')
 with open(__POLYGON_PATH.substitute(filename='private_keys.json')) as file:

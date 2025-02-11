@@ -250,6 +250,7 @@ class ContractTest:
         malevolent = oracles_info[2]
 
         # Itera sugli oracoli e stampa una stringa formattata
+        print('*** Oracols Info ***')
         for i in range(len(addresses)):
             if malevolent[i]:
                 print(f"Oracolo malevolo {i+1}: Indirizzo: {addresses[i]}, Reputazione: {reputations[i]}")
