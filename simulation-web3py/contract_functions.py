@@ -237,8 +237,6 @@ class ContractTest:
         })
         
         statuses.append(await self.sign_send_transaction(tx_file_check, self.private_keys[1]))
-        print("printo statuses in sequence file")
-        print(statuses)
         all_statuses = check_statuses(statuses)
         
         #if all_statuses and DEBUG:
@@ -423,7 +421,6 @@ class ContractTest:
         #filepath = f'importantFile.pdf'
         url = f'www.{filepath}.com'
         hash_digest = '0x4f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'
-        print("in corrupted file check")
         all_statuses = await self.sequence_file(filepath, url, hash_digest)
         if all_statuses and DEBUG:
             #print(f'sequence file per corrupted_file_check con filepath: {filepath} e url: {url} e hash: {hash_digest}')

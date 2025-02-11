@@ -7,6 +7,8 @@ declare -a node_ids
 
 declare -i NUM_VALIDATORS=4
 declare -i NUM_ACCOUNTS=8 #320 120
+#il numero di account sarebbe il numero di chiavi private poi che vengono generate
+#quindi NUM_ACCOUNTS = DEPLOYED_CONTRACTS * N_chiavi per contratto
 
 
 if [ $VAR = "yes" ]

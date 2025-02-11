@@ -146,7 +146,10 @@ class Web3Client:
             })
         elif 'FileDigestOracle' in filename:
             is_malevolent = (random.random() < 0.3)
-            print(f'is_malevolent: {is_malevolent}')
+            if is_malevolent:
+                print("deployed malevolent oracle")
+            else:
+                print("deployed benevolent oracle")
             tx = Contract.constructor(is_malevolent).buildTransaction({
                 'gasPrice': 0,
                 'from': self.w3.eth.default_account,
