@@ -2,7 +2,8 @@
 This project extends the cloud-chain system developed by AnaNSi-research, which implemented a set of SLA contracts between a cloud provider and a client on the blockchain. In the original project, only a single oracle was used to obtain file path related to digests to monitor potential SLA violations. My extension introduces a decentralized oracle system, comprising five oracles per SLA contract and an aggregator that collects the responses, computes the median, and updates the reputation of each oracle accordingly. Each oracle is initially assigned a reputation of 100. When the aggregator processes a request from the SLA contract to retrieve digests from the oracle contracts, it calculates the median of the responses and increases an oracle’s reputation by 10 if its response matches the median; otherwise, it decreases the reputation by 10. Should an oracle’s reputation fall below 50, it is deemed unreliable and is no longer queried for the median calculation. Moreover, the system accounts for the possibility of malicious oracles: these typically return correct digests to accumulate reputation, but when confronted with a request for an important file, they deliberately return an incorrect digest. Despite their misbehavior, their high reputation may cause the aggregator to continue trusting them.
 
 # Running the Simulation
-To run the simulation, you must first launch a local Polygon blockchain. This is achieved by executing the script run_polygon.sh and follow the instructions:
+To run the simulation, you must first launch a local Polygon blockchain. This is achieved by executing the script run_polygon.sh and by following the instructions:
+
 - Do you want create the network from zero?
 yes
 - How many validators do you want?
